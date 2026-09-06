@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Headcount
 
-## Getting Started
+Post a flyer for the concert, the rave, the club night. Headcount reads the flyer with AI, puts the
+event on your friends' calendars, and shows you who's in, so nobody goes alone.
 
-First, run the development server:
+- **Follow friends** and see the events they post in your feed and on a shared calendar.
+- **Post a flyer**: upload the photo, Claude extracts title, date, venue, lineup and price; you
+  confirm and post.
+- **I'm in / Maybe**: RSVP, see the headcount, and plan in the thread on each event.
+- **Been to**: past events you marked as going become your going-out history.
+
+## Stack
+
+| Layer     | Choice                                                         |
+| --------- | -------------------------------------------------------------- |
+| App       | Next.js 16 (App Router, Server Actions), React 19, Tailwind 4  |
+| Data/Auth | Supabase (Postgres, Auth, Storage) via the Vercel Marketplace  |
+| AI        | Vercel AI SDK + AI Gateway, `anthropic/claude-sonnet-5` vision |
+| Hosting   | Vercel (auto-deploys from GitHub)                              |
+
+## Local development
 
 ```bash
+npm install
+vercel link                      # once, links this folder to the Vercel project
+vercel env pull .env.local       # pulls Supabase keys + VERCEL_OIDC_TOKEN for AI Gateway
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Database
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Schema lives in `supabase/migrations/`. Apply it to the linked Supabase project with the
+connection string Vercel provides:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+vercel env pull .env.local
+supabase db push --db-url "$POSTGRES_URL_NON_POOLING"
+```
 
-## Learn More
+Everything is behind row-level security. Signed-in users can read profiles, events, RSVPs and
+comments; they can only write rows they own. Flyers go in the public `event-images` storage bucket,
+scoped to a folder per user.
 
-To learn more about Next.js, take a look at the following resources:
+## Environment variables
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Set automatically by the Supabase integration on Vercel (pull them with `vercel env pull`):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `..._PUBLISHABLE_KEY`)
+- `POSTGRES_URL_NON_POOLING` (used only for migrations)
 
-## Deploy on Vercel
+Optional:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `NEXT_PUBLIC_SITE_URL`: absolute origin for auth emails (defaults to the request host)
+- `AI_GATEWAY_API_KEY`: only needed outside Vercel if you don't have `VERCEL_OIDC_TOKEN`
+- `EVENT_EXTRACTION_MODEL`: override the vision model (default `anthropic/claude-sonnet-5`)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Auth notes
+
+- Email + password sign-in. New Supabase projects require email confirmation; turn it off under
+  Authentication → Providers → Email in the Supabase dashboard if you'd rather skip it while
+  testing.
+- Add your production and preview URLs to Authentication → URL Configuration → Redirect URLs
+  (`https://<your-app>.vercel.app/auth/callback`).
+
+## Project layout
+
+```
+src/app/(auth)        login, signup
+src/app/(app)         feed, calendar, events/new, events/[id], u/[username], people, settings
+src/app/auth/callback email confirmation handler
+src/lib/actions       server actions (auth, events, social)
+src/lib/ai            flyer extraction (AI SDK structured output)
+src/lib/supabase      browser/server clients + session-refresh proxy
+src/lib/queries.ts    data access helpers
+src/proxy.ts          Next.js proxy (session refresh + auth redirects)
+supabase/migrations   database schema, RLS, storage policies
+```
