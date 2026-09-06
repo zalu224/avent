@@ -20,8 +20,12 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
-  const displayName = String(formData.get("display_name") ?? "").trim().slice(0, 60);
+  const firstName = String(formData.get("first_name") ?? "").trim().slice(0, 40);
+  const lastName = String(formData.get("last_name") ?? "").trim().slice(0, 40);
+  const displayName = [firstName, lastName].filter(Boolean).join(" ").slice(0, 60);
 
+  if (!firstName) return { error: "Enter your first name." };
+  if (!lastName) return { error: "Enter your last name." };
   if (!email.includes("@")) return { error: "Enter a valid email address." };
   if (!USERNAME_RE.test(username)) {
     return { error: "Usernames are 3–24 characters: lowercase letters, numbers and underscores." };
@@ -43,7 +47,12 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     email,
     password,
     options: {
-      data: { username, display_name: displayName || username },
+      data: {
+        username,
+        display_name: displayName || username,
+        first_name: firstName,
+        last_name: lastName,
+      },
       emailRedirectTo: `${siteUrl}/auth/callback?next=/feed`,
     },
   });

@@ -33,6 +33,8 @@ export type Profile = {
   id: string;
   username: string;
   display_name: string;
+  first_name?: string | null;
+  last_name?: string | null;
   avatar_url: string | null;
   bio: string | null;
   city: string | null;
@@ -78,6 +80,8 @@ export type RsvpLite = {
 export type EventWithMeta = EventRow & {
   author: ProfileLite;
   rsvps: RsvpLite[];
+  /** Filled in by getFeed for the feed cards. */
+  comment_count?: number;
 };
 
 export type CommentWithAuthor = {

@@ -75,18 +75,33 @@ export function SignupForm() {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
-      <div>
-        <label htmlFor="display_name" className="field-label">
-          Name
-        </label>
-        <input
-          id="display_name"
-          name="display_name"
-          autoComplete="name"
-          maxLength={60}
-          className="field"
-          placeholder="What your friends call you"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="first_name" className="field-label">
+            First name
+          </label>
+          <input
+            id="first_name"
+            name="first_name"
+            autoComplete="given-name"
+            required
+            maxLength={40}
+            className="field"
+          />
+        </div>
+        <div>
+          <label htmlFor="last_name" className="field-label">
+            Last name
+          </label>
+          <input
+            id="last_name"
+            name="last_name"
+            autoComplete="family-name"
+            required
+            maxLength={40}
+            className="field"
+          />
+        </div>
       </div>
       <div>
         <label htmlFor="username" className="field-label">

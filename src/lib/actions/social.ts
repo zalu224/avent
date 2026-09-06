@@ -36,7 +36,9 @@ export async function updateProfile(
   const userId = await requireUserId();
 
   const username = String(formData.get("username") ?? "").trim().toLowerCase();
-  const display_name = String(formData.get("display_name") ?? "").trim().slice(0, 60);
+  const first_name = String(formData.get("first_name") ?? "").trim().slice(0, 40);
+  const last_name = String(formData.get("last_name") ?? "").trim().slice(0, 40);
+  const display_name = [first_name, last_name].filter(Boolean).join(" ").slice(0, 60);
   const city = String(formData.get("city") ?? "").trim().slice(0, 80);
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
   const avatar_url = String(formData.get("avatar_url") ?? "").trim();
@@ -44,19 +46,27 @@ export async function updateProfile(
   if (!USERNAME_RE.test(username)) {
     return { error: "Usernames are 3–24 characters: lowercase letters, numbers and underscores." };
   }
-  if (!display_name) return { error: "Add a display name." };
+  if (!first_name) return { error: "Add your first name." };
+  if (!last_name) return { error: "Add your last name." };
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const base = {
+    username,
+    display_name,
+    city: city || null,
+    bio: bio || null,
+    avatar_url: avatar_url || null,
+  };
+
+  let { error } = await supabase
     .from("profiles")
-    .update({
-      username,
-      display_name,
-      city: city || null,
-      bio: bio || null,
-      avatar_url: avatar_url || null,
-    })
+    .update({ ...base, first_name, last_name })
     .eq("id", userId);
+
+  // Older databases without the name columns still get the combined name.
+  if (error?.code === "42703") {
+    ({ error } = await supabase.from("profiles").update(base).eq("id", userId));
+  }
 
   if (error) {
     if (error.code === "23505") return { error: "That username is taken." };

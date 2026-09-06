@@ -68,18 +68,37 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </div>
       <input type="hidden" name="avatar_url" value={avatarUrl} />
 
-      <div>
-        <label htmlFor="display_name" className="field-label">
-          Name
-        </label>
-        <input
-          id="display_name"
-          name="display_name"
-          required
-          maxLength={60}
-          defaultValue={profile.display_name}
-          className="field"
-        />
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label htmlFor="first_name" className="field-label">
+            First name
+          </label>
+          <input
+            id="first_name"
+            name="first_name"
+            required
+            maxLength={40}
+            autoComplete="given-name"
+            defaultValue={profile.first_name ?? profile.display_name.split(" ")[0] ?? ""}
+            className="field"
+          />
+        </div>
+        <div>
+          <label htmlFor="last_name" className="field-label">
+            Last name
+          </label>
+          <input
+            id="last_name"
+            name="last_name"
+            required
+            maxLength={40}
+            autoComplete="family-name"
+            defaultValue={
+              profile.last_name ?? profile.display_name.split(" ").slice(1).join(" ") ?? ""
+            }
+            className="field"
+          />
+        </div>
       </div>
 
       <div>

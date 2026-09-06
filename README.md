@@ -43,6 +43,11 @@ vercel env pull .env.local
 supabase db push --db-url "$POSTGRES_URL_NON_POOLING"
 ```
 
+Migrations, in order: `20260906000000_init` (tables, RLS, storage bucket + policies),
+`20260906010000_event_search` (tags + ranked search), `20260906020000_profile_names` (first/last
+name). If you apply them by pasting into the SQL editor, run the whole file each time; the storage
+section at the end of the first one is easy to miss.
+
 Everything is behind row-level security. Signed-in users can read profiles, events, RSVPs and
 comments; they can only write rows they own. Flyers go in the public `event-images` storage bucket,
 scoped to a folder per user.

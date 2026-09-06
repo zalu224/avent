@@ -60,7 +60,7 @@ function uniqueById(events: EventWithMeta[]) {
   return [...seen.values()];
 }
 
-/** Newest posts from people you follow, plus your own. */
+/** Newest posts from people you follow, plus your own, with comment counts. */
 export async function getFeed(db: Db, userId: string): Promise<EventWithMeta[]> {
   const following = await getFollowingIds(db, userId);
   const { data } = await db
@@ -69,7 +69,23 @@ export async function getFeed(db: Db, userId: string): Promise<EventWithMeta[]> 
     .in("author_id", [userId, ...following])
     .order("created_at", { ascending: false })
     .limit(60);
-  return (data as unknown as EventWithMeta[]) ?? [];
+  const events = (data as unknown as EventWithMeta[]) ?? [];
+  if (events.length === 0) return events;
+
+  const { data: comments } = await db
+    .from("comments")
+    .select("event_id")
+    .in(
+      "event_id",
+      events.map((e) => e.id)
+    )
+    .limit(5000);
+  const counts = new Map<string, number>();
+  for (const c of comments ?? []) {
+    const id = c.event_id as string;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return events.map((e) => ({ ...e, comment_count: counts.get(e.id) ?? 0 }));
 }
 
 /** Upcoming events from your circle for the discover strip. */

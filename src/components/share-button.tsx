@@ -1,24 +1,46 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Link2 } from "lucide-react";
+import { Check, Link2, Send } from "lucide-react";
 
-export function ShareButton({ title }: { title: string }) {
+export function ShareButton({
+  title,
+  url,
+  compact = false,
+}: {
+  title: string;
+  /** Absolute or relative URL to share; defaults to the current page. */
+  url?: string;
+  compact?: boolean;
+}) {
   const [copied, setCopied] = useState(false);
 
   async function share() {
-    const url = window.location.href;
+    const target = url ? new URL(url, window.location.origin).toString() : window.location.href;
     try {
       if (navigator.share) {
-        await navigator.share({ title, url });
+        await navigator.share({ title, url: target });
         return;
       }
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(target);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // User dismissed the share sheet or clipboard is unavailable.
     }
+  }
+
+  if (compact) {
+    return (
+      <button
+        type="button"
+        onClick={share}
+        aria-label={copied ? "Link copied" : "Share"}
+        className={`btn btn-ghost px-2 ${copied ? "text-glow" : ""}`}
+      >
+        {copied ? <Check size={20} aria-hidden /> : <Send size={20} aria-hidden />}
+      </button>
+    );
   }
 
   return (
