@@ -86,6 +86,44 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   redirect(next);
 }
 
+export async function requestPasswordReset(
+  _prev: AuthState,
+  formData: FormData
+): Promise<AuthState> {
+  const email = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!email.includes("@")) return { error: "Enter the email you signed up with." };
+  if (!isSupabaseConfigured()) return { error: NOT_CONNECTED };
+
+  const supabase = await createClient();
+  const siteUrl = await getSiteUrl();
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/callback?next=/reset-password`,
+  });
+  if (error) {
+    console.error("requestPasswordReset failed", error.message);
+  }
+  // Always respond the same way so addresses can't be probed.
+  return { message: `If ${email} has a Headcount account, a reset link is on its way.` };
+}
+
+export async function updatePassword(_prev: AuthState, formData: FormData): Promise<AuthState> {
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirm") ?? "");
+  if (password.length < 8) return { error: "Passwords need at least 8 characters." };
+  if (password !== confirm) return { error: "Those passwords don't match." };
+  if (!isSupabaseConfigured()) return { error: NOT_CONNECTED };
+
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims?.sub) {
+    return { error: "That reset link has expired. Request a new one." };
+  }
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return { error: error.message };
+
+  redirect("/feed");
+}
+
 export async function signOut() {
   if (!isSupabaseConfigured()) redirect("/login");
   const supabase = await createClient();

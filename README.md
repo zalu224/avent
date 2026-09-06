@@ -73,6 +73,22 @@ Optional:
 - Until the Supabase integration has populated the env vars, the app renders a "not connected"
   notice instead of failing. Redeploy after the integration is attached.
 
+## Email (Resend)
+
+Two kinds of email, both branded Headcount:
+
+1. **Auth emails** (confirm sign-up, sign-in link, password reset, email change) are sent by
+   Supabase Auth through Resend's SMTP relay. Templates live in `src/lib/email/auth-emails.tsx`;
+   run `npx tsx scripts/render-auth-emails.tsx` to regenerate `supabase/templates/*.html`, then
+   paste them into Supabase → Authentication → Email Templates (or push `supabase/config.toml`).
+   SMTP settings in Supabase → Authentication → SMTP: host `smtp.resend.com`, port `465`,
+   username `resend`, password = your Resend API key, sender = an address on a domain verified in
+   Resend (`onboarding@resend.dev` only delivers to your own inbox while testing).
+2. **Notifications** are sent from the app with the Resend SDK (`src/lib/email/notify.ts`): a new
+   follower, someone saying "I'm in" on your event, and replies on your event's plan thread.
+   These need `RESEND_API_KEY`, `EMAIL_FROM`, and `SUPABASE_SECRET_KEY` (only used server-side to
+   look up the recipient's address). Without those keys the app simply skips sending.
+
 ## Auth notes
 
 - Email + password sign-in. New Supabase projects require email confirmation; turn it off under

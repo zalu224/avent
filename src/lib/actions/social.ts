@@ -1,6 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { notifyFollow } from "@/lib/email/notify";
+import { getSiteUrl } from "@/lib/site";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 
 export async function setFollow(targetId: string, follow: boolean) {
@@ -9,9 +12,18 @@ export async function setFollow(targetId: string, follow: boolean) {
 
   const supabase = await createClient();
   if (follow) {
+    const { data: existing } = await supabase
+      .from("follows")
+      .select("follower_id")
+      .match({ follower_id: userId, following_id: targetId })
+      .maybeSingle();
     await supabase
       .from("follows")
       .upsert({ follower_id: userId, following_id: targetId }, { onConflict: "follower_id,following_id", ignoreDuplicates: true });
+    if (!existing) {
+      const siteUrl = await getSiteUrl();
+      after(() => notifyFollow(targetId, userId, siteUrl));
+    }
   } else {
     await supabase
       .from("follows")

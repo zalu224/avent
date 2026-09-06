@@ -2,9 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { z } from "zod";
 import { extractEventFromImage, type ExtractedEvent } from "@/lib/ai/extract-event";
+import { notifyComment, notifyRsvp } from "@/lib/email/notify";
 import { fmt, isValidTimeZone, localInputToIso } from "@/lib/format";
+import { getSiteUrl } from "@/lib/site";
 import { eventImagePublicPrefix } from "@/lib/supabase/env";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 import { getTimeZone } from "@/lib/timezone";
@@ -241,12 +244,27 @@ export async function setRsvp(eventId: string, status: RsvpStatus | null) {
   if (status && !RSVP_STATUSES.includes(status)) return;
 
   const supabase = await createClient();
+  let wasGoing = false;
+  if (status === "going") {
+    const { data: existing } = await supabase
+      .from("rsvps")
+      .select("status")
+      .match({ event_id: eventId, user_id: userId })
+      .maybeSingle();
+    wasGoing = existing?.status === "going" || existing?.status === "went";
+  }
+
   if (status) {
     await supabase
       .from("rsvps")
       .upsert({ event_id: eventId, user_id: userId, status }, { onConflict: "event_id,user_id" });
   } else {
     await supabase.from("rsvps").delete().match({ event_id: eventId, user_id: userId });
+  }
+
+  if (status === "going" && !wasGoing) {
+    const siteUrl = await getSiteUrl();
+    after(() => notifyRsvp(eventId, userId, siteUrl));
   }
 
   revalidatePath("/feed");
@@ -273,6 +291,9 @@ export async function addComment(
     .from("comments")
     .insert({ event_id: eventId, author_id: userId, body });
   if (error) return { error: "Couldn't post that comment." };
+
+  const siteUrl = await getSiteUrl();
+  after(() => notifyComment(eventId, userId, body, siteUrl));
 
   revalidatePath(`/events/${eventId}`);
   revalidatePath("/activity");

@@ -7,6 +7,7 @@ function isPublicPath(pathname: string) {
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
+    pathname.startsWith("/forgot-password") ||
     pathname.startsWith("/auth/")
   );
 }
@@ -57,7 +58,10 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (signedIn && (pathname === "/" || pathname === "/login" || pathname === "/signup")) {
+  if (
+    signedIn &&
+    (pathname === "/" || pathname === "/login" || pathname === "/signup" || pathname === "/forgot-password")
+  ) {
     const feedUrl = request.nextUrl.clone();
     feedUrl.pathname = "/feed";
     feedUrl.search = "";

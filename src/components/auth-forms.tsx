@@ -24,9 +24,14 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
         <input id="email" name="email" type="email" autoComplete="email" required className="field" />
       </div>
       <div>
-        <label htmlFor="password" className="field-label">
-          Password
-        </label>
+        <div className="flex items-baseline justify-between">
+          <label htmlFor="password" className="field-label">
+            Password
+          </label>
+          <Link href="/forgot-password" className="mb-1.5 text-sm text-lilac hover:text-cream hover:underline">
+            Forgot it?
+          </Link>
+        </div>
         <input
           id="password"
           name="password"
