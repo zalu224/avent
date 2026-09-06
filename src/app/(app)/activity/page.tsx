@@ -42,7 +42,7 @@ function Line({ item }: { item: ActivityItem }) {
 
   return (
     <>
-      {who} on {eventLink}: <span className="text-lilac-2">{item.body}</span>
+      {who} on {eventLink}: <span className="text-muted-2">{item.body}</span>
     </>
   );
 }
@@ -60,7 +60,7 @@ export default async function ActivityPage() {
       {items.length === 0 ? (
         <div className="card px-5 py-10 text-center">
           <h2 className="font-display text-lg font-bold">Quiet for now</h2>
-          <p className="mx-auto mt-2 max-w-sm text-lilac-2">
+          <p className="mx-auto mt-2 max-w-sm text-muted-2">
             When someone follows you, says they’re in for one of your events, or replies on a plan
             you’re part of, it shows up here.
           </p>
@@ -71,7 +71,7 @@ export default async function ActivityPage() {
       ) : (
         <ul>
           {items.map((item) => (
-            <li key={item.key} className="flex items-start gap-3 border-b border-plum-2 py-3 last:border-0">
+            <li key={item.key} className="flex items-start gap-3 border-b border-edge py-3 last:border-0">
               <Link href={`/u/${item.actor.username}`} className="shrink-0">
                 <Avatar profile={item.actor} size={36} />
               </Link>
@@ -79,7 +79,7 @@ export default async function ActivityPage() {
                 <p className="leading-snug">
                   <Line item={item} />
                 </p>
-                <p className="mt-0.5 text-xs text-lilac">{timeAgo(item.at, now)}</p>
+                <p className="mt-0.5 text-xs text-muted">{timeAgo(item.at, now)}</p>
               </div>
             </li>
           ))}

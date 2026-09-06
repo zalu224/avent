@@ -37,7 +37,7 @@ export default function LandingPage() {
             <br />
             going?
           </h1>
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-lilac-2 md:text-xl">
+          <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-2 md:text-xl">
             Post a flyer for the concert, the rave, the club night. Headcount puts it on your
             friends’ calendars and shows you who’s in, so nobody goes alone.
           </p>
@@ -54,10 +54,10 @@ export default function LandingPage() {
         <section className="mx-auto mt-20 w-full max-w-4xl md:mt-28" aria-label="How it works">
           <ol className="grid gap-8 md:grid-cols-3">
             {STEPS.map((step, i) => (
-              <li key={step.title} className="border-t border-plum-3 pt-5">
-                <span className="font-display text-3xl font-black text-glow">{i + 1}</span>
+              <li key={step.title} className="border-t border-edge-2 pt-5">
+                <span className="font-display text-3xl font-black text-flare">{i + 1}</span>
                 <h2 className="mt-3 font-display text-lg font-bold leading-snug">{step.title}</h2>
-                <p className="mt-2 leading-relaxed text-lilac-2">{step.body}</p>
+                <p className="mt-2 leading-relaxed text-muted-2">{step.body}</p>
               </li>
             ))}
           </ol>

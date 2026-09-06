@@ -10,7 +10,7 @@ export function ForgotPasswordForm() {
   if (state.message) {
     return (
       <div className="flex flex-col gap-4">
-        <p role="status" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-3 text-glow">
+        <p role="status" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-3 text-glow-ink">
           {state.message}
         </p>
         <Link href="/login" className="btn btn-outline w-full py-3">
@@ -36,9 +36,9 @@ export function ForgotPasswordForm() {
       <button type="submit" disabled={pending} className="btn btn-primary mt-2 w-full py-3">
         {pending ? "Sending…" : "Send reset link"}
       </button>
-      <p className="text-center text-sm text-lilac">
+      <p className="text-center text-sm text-muted">
         Remembered it?{" "}
-        <Link href="/login" className="font-semibold text-cream hover:underline">
+        <Link href="/login" className="font-semibold text-fore hover:underline">
           Sign in
         </Link>
       </p>

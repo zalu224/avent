@@ -21,7 +21,7 @@ export function Comments({
       <h2 id="comments-heading" className="font-display text-lg font-bold">
         {comments.length === 0 ? "Start the plan" : `Plans (${comments.length})`}
       </h2>
-      <p className="mt-1 text-sm text-lilac">
+      <p className="mt-1 text-sm text-muted">
         Sort out rides, meet-up spots and who’s getting tickets.
       </p>
 
@@ -36,7 +36,7 @@ export function Comments({
                 <Link href={`/u/${c.author.username}`} className="font-semibold hover:underline">
                   {c.author.display_name || c.author.username}
                 </Link>{" "}
-                <span className="text-lilac">{timeAgo(c.created_at)}</span>
+                <span className="text-muted">{timeAgo(c.created_at)}</span>
               </p>
               <p className="mt-0.5 whitespace-pre-line leading-relaxed">{c.body}</p>
             </div>
@@ -59,7 +59,7 @@ function DeleteCommentButton({ commentId, eventId }: { commentId: string; eventI
       type="button"
       disabled={pending}
       onClick={() => startTransition(() => deleteComment(commentId, eventId))}
-      className="self-start text-xs text-lilac hover:text-flare disabled:opacity-50"
+      className="self-start text-xs text-muted hover:text-flare disabled:opacity-50"
     >
       Delete
     </button>

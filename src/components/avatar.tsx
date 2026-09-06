@@ -46,8 +46,8 @@ export function Avatar({
       style={{
         ...style,
         fontSize: Math.round(size * 0.42),
-        background: `hsl(${hue} 55% 32%)`,
-        color: `hsl(${hue} 90% 88%)`,
+        background: `hsl(${hue} 85% 90%)`,
+        color: `hsl(${hue} 55% 32%)`,
       }}
       className={`inline-flex shrink-0 items-center justify-center rounded-full font-display font-bold leading-none ${className}`}
     >

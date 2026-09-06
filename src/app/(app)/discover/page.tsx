@@ -96,7 +96,7 @@ export default async function DiscoverPage({
           <Search
             size={18}
             aria-hidden
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lilac"
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
           />
           <input
             id="q"
@@ -112,10 +112,10 @@ export default async function DiscoverPage({
           </button>
         </div>
         {!q && (
-          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-lilac">
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted">
             Try
             {EXAMPLES.map((ex) => (
-              <Link key={ex} href={href({ q: ex })} className="chip hover:bg-plum-3">
+              <Link key={ex} href={href({ q: ex })} className="chip hover:bg-edge-2">
                 {ex}
               </Link>
             ))}
@@ -150,7 +150,7 @@ export default async function DiscoverPage({
         <Link
           href={href({ cat: null })}
           aria-current={!category ? "true" : undefined}
-          className={`chip ${!category ? "bg-cream text-ink" : "hover:bg-plum-3"}`}
+          className={`chip ${!category ? "bg-fore text-canvas" : "hover:bg-edge-2"}`}
         >
           All types
         </Link>
@@ -159,7 +159,7 @@ export default async function DiscoverPage({
             key={c}
             href={href({ cat: c })}
             aria-current={category === c ? "true" : undefined}
-            className={`chip ${category === c ? "bg-cream text-ink" : "hover:bg-plum-3"}`}
+            className={`chip ${category === c ? "bg-fore text-canvas" : "hover:bg-edge-2"}`}
           >
             {CATEGORY_LABELS[c]}
           </Link>
@@ -167,7 +167,7 @@ export default async function DiscoverPage({
       </div>
 
       {q && events.length > 0 && (
-        <p className="mb-3 text-sm text-lilac">
+        <p className="mb-3 text-sm text-muted">
           {events.length === 1 ? "1 event" : `${events.length} events`} for “{q}”
         </p>
       )}
@@ -177,7 +177,7 @@ export default async function DiscoverPage({
           <h2 className="font-display text-lg font-bold">
             {q ? "No matches" : "Nothing coming up here"}
           </h2>
-          <p className="mx-auto mt-2 max-w-sm text-lilac-2">
+          <p className="mx-auto mt-2 max-w-sm text-muted-2">
             {emptyText} If you know about it, post the flyer and it shows up for everyone.
           </p>
           <div className="mt-5 flex justify-center gap-3">

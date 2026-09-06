@@ -17,7 +17,7 @@ export function Headcount({
   const goingWord = past ? "went" : "going";
 
   if (going.length === 0 && interested.length === 0) {
-    return <p className="text-sm text-lilac">{past ? "Nobody logged this one." : "Nobody's in yet. Be first."}</p>;
+    return <p className="text-sm text-muted">{past ? "Nobody logged this one." : "Nobody's in yet. Be first."}</p>;
   }
 
   return (
@@ -29,13 +29,13 @@ export function Headcount({
               key={r.user_id}
               profile={r.profile!}
               size={26}
-              className="ring-2 ring-ink"
+              className="ring-2 ring-canvas"
             />
           ))}
         </div>
       )}
-      <p className="text-sm text-lilac-2">
-        {going.length > 0 && <span className="font-semibold text-cream">{pluralize(going.length, "person", "people")} {goingWord}</span>}
+      <p className="text-sm text-muted-2">
+        {going.length > 0 && <span className="font-semibold text-fore">{pluralize(going.length, "person", "people")} {goingWord}</span>}
         {going.length > 0 && interested.length > 0 && ", "}
         {interested.length > 0 && <span>{interested.length} interested</span>}
       </p>

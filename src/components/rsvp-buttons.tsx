@@ -73,7 +73,7 @@ export function RsvpButtons({
         onClick={() => choose(interested ? null : "interested")}
         disabled={pending}
         aria-pressed={interested}
-        className={`btn ${sizing} ${interested ? "border-glow text-glow btn-outline" : "btn-outline"}`}
+        className={`btn ${sizing} ${interested ? "border-glow text-glow-ink btn-outline" : "btn-outline"}`}
       >
         {interested ? "Interested" : "Maybe"}
       </button>

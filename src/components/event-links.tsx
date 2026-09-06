@@ -28,10 +28,10 @@ export function EventLinks({ event }: { event: EventRow }) {
   if (rows.length === 0 && !event.organizer_name) return null;
 
   return (
-    <section className="mt-6 rounded-card border border-plum-2 bg-plum p-4" aria-label="Organizer and links">
+    <section className="mt-6 rounded-card border border-edge bg-surface p-4" aria-label="Organizer and links">
       {event.organizer_name && (
-        <p className="text-sm text-lilac">
-          Put on by <span className="font-semibold text-cream">{event.organizer_name}</span>
+        <p className="text-sm text-muted">
+          Put on by <span className="font-semibold text-fore">{event.organizer_name}</span>
         </p>
       )}
       {rows.length > 0 && (
@@ -47,10 +47,10 @@ export function EventLinks({ event }: { event: EventRow }) {
                 {LABELS[kind]}
                 <ExternalLink size={14} aria-hidden />
               </a>
-              <span className="text-sm text-lilac-2">{hostOf(url)}</span>
-              <span className="inline-flex items-center gap-1 text-xs text-lilac">
+              <span className="text-sm text-muted-2">{hostOf(url)}</span>
+              <span className="inline-flex items-center gap-1 text-xs text-muted">
                 {check?.safe_browsing === "ok" && (
-                  <ShieldCheck size={12} aria-hidden className="text-glow" />
+                  <ShieldCheck size={12} aria-hidden className="text-glow-ink" />
                 )}
                 {provenance(check)}
                 {check?.safe_browsing === "ok" && ", passed Safe Browsing"}

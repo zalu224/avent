@@ -132,8 +132,12 @@ export async function extractEventFromImage(input: Input): Promise<ExtractionRes
         model: provider.model,
         output: Output.object({ schema: extractedEventSchema }),
         messages: [{ role: "user", content }],
-        maxOutputTokens: 1500,
+        // Some Gemini models spend output budget on "thinking" by default,
+        // which truncated the JSON; providers.ts turns it off where allowed.
+        providerOptions: provider.providerOptions,
+        maxOutputTokens: 4096,
         maxRetries: 1,
+        abortSignal: AbortSignal.timeout(45_000),
       });
       if (!output) throw new Error("no structured output");
       return { event: output, provider: provider.name, providerLabel: provider.label };

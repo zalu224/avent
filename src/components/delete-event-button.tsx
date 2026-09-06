@@ -17,7 +17,7 @@ export function DeleteEventButton({ eventId }: { eventId: string }) {
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-sm text-lilac-2">Delete this post for everyone?</span>
+      <span className="text-sm text-muted-2">Delete this post for everyone?</span>
       <button
         type="button"
         disabled={pending}

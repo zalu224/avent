@@ -2,7 +2,7 @@ import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogle } from "@ai-sdk/google";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createOllama } from "ollama-ai-provider-v2";
-import type { LanguageModel } from "ai";
+import type { JSONValue, LanguageModel } from "ai";
 
 /**
  * Vision model chain for reading flyers, in priority order. Each entry is
@@ -22,16 +22,27 @@ export type VisionProvider = {
   name: ProviderName;
   label: string;
   model: LanguageModel;
+  /** Provider-specific call options, e.g. turning off Gemini "thinking". */
+  providerOptions?: Record<string, Record<string, JSONValue>>;
 };
 
 // Google retires older Flash models for new keys; keep a couple of fallbacks
 // so a retired or overloaded model doesn't take flyer reading down.
+// 3.5 Flash goes first: it accepts thinkingBudget=0, which keeps structured
+// output fast and untruncated. 3.6 rejects that option, so it runs as-is.
 const GEMINI_DEFAULTS = [
-  "gemini-3.6-flash",
   "gemini-3.5-flash",
+  "gemini-3.6-flash",
   "gemini-3.5-flash-lite",
   "gemini-flash-lite-latest",
 ];
+
+/** Models known to accept thinkingBudget: 0 (2.x and 3.5 Flash families). */
+function geminiOptions(id: string): VisionProvider["providerOptions"] {
+  return /^gemini-(2\.|3\.5-|flash-lite-latest|flash-latest)/.test(id)
+    ? { google: { thinkingConfig: { thinkingBudget: 0 } } }
+    : undefined;
+}
 const GATEWAY_DEFAULT = "anthropic/claude-sonnet-5";
 
 function unique<T>(items: (T | undefined | null)[]) {
@@ -54,7 +65,12 @@ export function visionProviders(): VisionProvider[] {
   const google = googleProvider();
   if (google) {
     for (const id of geminiModelIds()) {
-      list.push({ name: "google", label: `Gemini (${id})`, model: google(id) });
+      list.push({
+        name: "google",
+        label: `Gemini (${id})`,
+        model: google(id),
+        providerOptions: geminiOptions(id),
+      });
     }
   }
 

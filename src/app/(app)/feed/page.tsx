@@ -25,7 +25,7 @@ export default async function FeedPage() {
       {upcoming.length > 0 && (
         <section
           aria-label="Up next"
-          className="-mx-4 mb-4 overflow-x-auto border-b border-plum-2 px-4 pb-4 md:mx-0 md:border-0 md:px-0"
+          className="-mx-4 mb-4 overflow-x-auto border-b border-edge px-4 pb-4 md:mx-0 md:border-0 md:px-0"
         >
           <ul className="flex gap-4">
             {upcoming.map((e) => {
@@ -37,10 +37,10 @@ export default async function FeedPage() {
                       className={`block rounded-full p-[3px] ${
                         iAmIn
                           ? "bg-gradient-to-tr from-glow to-flare"
-                          : "bg-gradient-to-tr from-flare to-plum-3"
+                          : "bg-gradient-to-tr from-flare to-edge-2"
                       }`}
                     >
-                      <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-plum ring-2 ring-ink">
+                      <span className="flex h-14 w-14 items-center justify-center overflow-hidden rounded-full bg-surface ring-2 ring-canvas">
                         {e.image_url ? (
                           <Image
                             src={e.image_url}
@@ -56,7 +56,7 @@ export default async function FeedPage() {
                         )}
                       </span>
                     </span>
-                    <span className="mt-1 block truncate text-[11px] text-lilac-2">
+                    <span className="mt-1 block truncate text-[11px] text-muted-2">
                       {fmt(e.starts_at, tz, "EEE d")}
                     </span>
                   </Link>
@@ -70,7 +70,7 @@ export default async function FeedPage() {
       {events.length === 0 ? (
         <div className="card px-5 py-10 text-center">
           <h2 className="font-display text-lg font-bold">Your feed is empty</h2>
-          <p className="mx-auto mt-2 max-w-sm text-lilac-2">
+          <p className="mx-auto mt-2 max-w-sm text-muted-2">
             Follow a few people to see what they’re going to, or post the first flyer yourself.
           </p>
           <div className="mt-5 flex justify-center gap-3">

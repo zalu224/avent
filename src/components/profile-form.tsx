@@ -106,7 +106,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           Username
         </label>
         <div className="flex items-center">
-          <span className="rounded-l-lg border border-r-0 border-plum-3 bg-plum-2 px-3 py-2.5 text-lilac">
+          <span className="rounded-l-lg border border-r-0 border-edge-2 bg-edge px-3 py-2.5 text-muted">
             @
           </span>
           <input
@@ -144,7 +144,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       </div>
 
       <div className="flex items-center justify-between gap-3 pt-2">
-        <p className={`text-sm ${state.error ? "text-flare" : "text-glow"}`} role="status">
+        <p className={`text-sm ${state.error ? "text-flare" : "text-glow-ink"}`} role="status">
           {state.error ?? state.message}
         </p>
         <button type="submit" disabled={pending || uploading} className="btn btn-primary">

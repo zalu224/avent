@@ -13,7 +13,7 @@ export default async function LoginPage({
   return (
     <>
       <h1 className="font-display text-2xl font-bold">Welcome back</h1>
-      <p className="mt-1 mb-6 text-lilac">See what your people are going to.</p>
+      <p className="mt-1 mb-6 text-muted">See what your people are going to.</p>
       <LoginForm next={next} linkError={error === "link"} />
     </>
   );

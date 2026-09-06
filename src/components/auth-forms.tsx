@@ -12,7 +12,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
       {next && <input type="hidden" name="next" value={next} />}
 
       {linkError && (
-        <p role="alert" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-2 text-sm text-glow">
+        <p role="alert" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-2 text-sm text-glow-ink">
           That sign-in link has expired or was already used. Sign in with your password instead.
         </p>
       )}
@@ -28,7 +28,7 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
           <label htmlFor="password" className="field-label">
             Password
           </label>
-          <Link href="/forgot-password" className="mb-1.5 text-sm text-lilac hover:text-cream hover:underline">
+          <Link href="/forgot-password" className="mb-1.5 text-sm text-muted hover:text-fore hover:underline">
             Forgot it?
           </Link>
         </div>
@@ -52,9 +52,9 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
         {pending ? "Signing in…" : "Sign in"}
       </button>
 
-      <p className="text-center text-sm text-lilac">
+      <p className="text-center text-sm text-muted">
         New here?{" "}
-        <Link href="/signup" className="font-semibold text-cream hover:underline">
+        <Link href="/signup" className="font-semibold text-fore hover:underline">
           Create an account
         </Link>
       </p>
@@ -68,7 +68,7 @@ export function SignupForm() {
   if (state.message) {
     return (
       <div className="flex flex-col gap-4">
-        <p role="status" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-3 text-glow">
+        <p role="status" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-3 text-glow-ink">
           {state.message}
         </p>
         <Link href="/login" className="btn btn-outline w-full py-3">
@@ -113,7 +113,7 @@ export function SignupForm() {
           Username
         </label>
         <div className="flex items-center">
-          <span className="rounded-l-lg border border-r-0 border-plum-3 bg-plum-2 px-3 py-2.5 text-lilac">
+          <span className="rounded-l-lg border border-r-0 border-edge-2 bg-edge px-3 py-2.5 text-muted">
             @
           </span>
           <input
@@ -158,9 +158,9 @@ export function SignupForm() {
         {pending ? "Creating your account…" : "Create account"}
       </button>
 
-      <p className="text-center text-sm text-lilac">
+      <p className="text-center text-sm text-muted">
         Already have one?{" "}
-        <Link href="/login" className="font-semibold text-cream hover:underline">
+        <Link href="/login" className="font-semibold text-fore hover:underline">
           Sign in
         </Link>
       </p>

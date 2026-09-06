@@ -36,7 +36,7 @@ export default async function PeoplePage({
         <Search
           size={18}
           aria-hidden
-          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lilac"
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted"
         />
         <input
           id="q"
@@ -49,18 +49,18 @@ export default async function PeoplePage({
       </form>
 
       {people.length === 0 ? (
-        <p className="px-2 py-10 text-center text-lilac-2">
+        <p className="px-2 py-10 text-center text-muted-2">
           {q ? `Nobody matches “${q}”.` : "No one else has joined yet. Invite your friends."}
         </p>
       ) : (
         <ul>
           {people.map((p) => (
-            <li key={p.id} className="flex items-center gap-3 border-b border-plum-2 py-3 last:border-0">
+            <li key={p.id} className="flex items-center gap-3 border-b border-edge py-3 last:border-0">
               <Link href={`/u/${p.username}`} className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar profile={p} size={44} />
                 <span className="min-w-0">
                   <span className="block truncate font-semibold">{p.display_name || p.username}</span>
-                  <span className="block truncate text-sm text-lilac">@{p.username}</span>
+                  <span className="block truncate text-sm text-muted">@{p.username}</span>
                 </span>
               </Link>
               <FollowButton targetId={p.id} following={following.has(p.id)} size="sm" />

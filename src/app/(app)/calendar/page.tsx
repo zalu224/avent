@@ -117,7 +117,7 @@ export default async function CalendarPage({
           </Link>
         </div>
 
-        <div className="grid grid-cols-7 text-center text-xs font-medium text-lilac">
+        <div className="grid grid-cols-7 text-center text-xs font-medium text-muted">
           {WEEKDAYS.map((d) => (
             <div key={d} className="py-1">
               {d}
@@ -137,7 +137,7 @@ export default async function CalendarPage({
               <>
                 <span
                   className={`text-sm leading-none ${
-                    today ? "rounded-full bg-cream px-1.5 py-0.5 font-bold text-ink" : ""
+                    today ? "rounded-full bg-fore px-1.5 py-0.5 font-bold text-canvas" : ""
                   }`}
                 >
                   {format(d, "d")}
@@ -155,14 +155,14 @@ export default async function CalendarPage({
               </>
             );
             const base = `flex h-14 flex-col items-center justify-start rounded-md pt-2 ${
-              inMonth ? "text-cream" : "text-lilac/40"
+              inMonth ? "text-fore" : "text-muted/40"
             }`;
             return dayEvents.length > 0 ? (
               <a
                 key={key}
                 href={`#d-${key}`}
                 aria-label={`${format(d, "EEEE, MMMM d")}: ${dayEvents.length} events`}
-                className={`${base} bg-plum-2 hover:bg-plum-3`}
+                className={`${base} bg-edge hover:bg-edge-2`}
               >
                 {content}
               </a>
@@ -177,7 +177,7 @@ export default async function CalendarPage({
 
       <section className="mt-8" aria-label="Events this month">
         {daysWithEvents.length === 0 ? (
-          <div className="px-2 py-8 text-center text-lilac-2">
+          <div className="px-2 py-8 text-center text-muted-2">
             <p>Nothing on the calendar for {format(monthStart, "MMMM")} yet.</p>
             <Link href="/events/new" className="btn btn-primary mt-4">
               Post a flyer

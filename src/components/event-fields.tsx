@@ -86,7 +86,7 @@ export function EventFieldInputs({
         </div>
         <div>
           <label htmlFor="ends_at_local" className="field-label">
-            Ends <span className="text-lilac">(optional)</span>
+            Ends <span className="text-muted">(optional)</span>
           </label>
           <input
             id="ends_at_local"
@@ -179,7 +179,7 @@ export function EventFieldInputs({
 
       <div>
         <label htmlFor="lineup" className="field-label">
-          Lineup <span className="text-lilac">(comma separated)</span>
+          Lineup <span className="text-muted">(comma separated)</span>
         </label>
         <input
           id="lineup"
@@ -193,7 +193,7 @@ export function EventFieldInputs({
 
       <div>
         <label htmlFor="tags" className="field-label">
-          Tags <span className="text-lilac">(genres, vibes, 21+)</span>
+          Tags <span className="text-muted">(genres, vibes, 21+)</span>
         </label>
         <input
           id="tags"
@@ -205,8 +205,8 @@ export function EventFieldInputs({
         />
       </div>
 
-      <fieldset className="rounded-lg border border-plum-3 p-3">
-        <legend className="px-1 text-sm font-medium text-lilac-2">Who’s putting it on</legend>
+      <fieldset className="rounded-lg border border-edge-2 p-3">
+        <legend className="px-1 text-sm font-medium text-muted-2">Who’s putting it on</legend>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label htmlFor="organizer_name" className="field-label">
@@ -268,7 +268,7 @@ export function EventFieldInputs({
             />
           </div>
         </div>
-        <p className="mt-2 text-xs text-lilac">
+        <p className="mt-2 text-xs text-muted">
           Links are checked before they’re shown: only web addresses, shorteners are unwrapped,
           and anything flagged as unsafe is dropped.
         </p>

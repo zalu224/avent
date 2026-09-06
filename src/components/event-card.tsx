@@ -14,16 +14,16 @@ export function whereLabel(event: Pick<EventWithMeta, "venue_name" | "city">) {
 }
 
 const CATEGORY_GRADIENT: Record<EventCategory, string> = {
-  concert: "from-flare/80 via-plum-3 to-ink",
-  rave: "from-glow/70 via-flare/50 to-ink",
-  club: "from-plum-3 via-flare/60 to-ink",
-  festival: "from-glow/80 via-plum-3 to-ink",
-  party: "from-flare/70 via-glow/40 to-ink",
-  sports: "from-glow/60 via-plum-3 to-ink",
-  comedy: "from-glow/70 via-plum-2 to-ink",
-  art: "from-lilac/60 via-plum-3 to-ink",
-  food: "from-glow/60 via-flare/40 to-ink",
-  other: "from-plum-3 via-plum-2 to-ink",
+  concert: "from-flare/80 via-edge-2 to-canvas",
+  rave: "from-glow/70 via-flare/50 to-canvas",
+  club: "from-edge-2 via-flare/60 to-canvas",
+  festival: "from-glow/80 via-edge-2 to-canvas",
+  party: "from-flare/70 via-glow/40 to-canvas",
+  sports: "from-glow/60 via-edge-2 to-canvas",
+  comedy: "from-glow/70 via-edge to-canvas",
+  art: "from-muted/60 via-edge-2 to-canvas",
+  food: "from-glow/60 via-flare/40 to-canvas",
+  other: "from-edge-2 via-edge to-canvas",
 };
 
 /** "alice and bob are in" / "alice, bob and 3 others are in". */
@@ -75,20 +75,20 @@ export function EventCard({
   const comments = event.comment_count ?? 0;
 
   return (
-    <article className="mb-2 border-b border-plum-2 pb-5 md:card md:mb-6 md:border md:pb-4">
+    <article className="mb-2 border-b border-edge pb-5 md:card md:mb-6 md:border md:pb-4">
       <header className="flex items-center gap-3 py-3 md:px-4">
         <Link href={`/u/${event.author.username}`} className="shrink-0">
-          <Avatar profile={event.author} size={36} className="ring-2 ring-flare/70 ring-offset-2 ring-offset-ink" />
+          <Avatar profile={event.author} size={36} className="ring-2 ring-flare/70 ring-offset-2 ring-offset-canvas" />
         </Link>
         <div className="min-w-0 flex-1 leading-tight">
           <Link href={`/u/${event.author.username}`} className="block truncate text-sm font-semibold hover:underline">
             {event.author.username}
           </Link>
-          <p className="truncate text-xs text-lilac">
+          <p className="truncate text-xs text-muted">
             {where || CATEGORY_LABELS[event.category]}
           </p>
         </div>
-        <span className="shrink-0 text-xs text-lilac">{timeAgo(event.created_at, now)}</span>
+        <span className="shrink-0 text-xs text-muted">{timeAgo(event.created_at, now)}</span>
       </header>
 
       <Link href={href} className="relative -mx-4 block md:mx-0" aria-label={`Open ${event.title}`}>
@@ -99,13 +99,13 @@ export function EventCard({
             width={1080}
             height={1350}
             sizes="(max-width: 768px) 100vw, 672px"
-            className="aspect-[4/5] w-full bg-plum object-contain"
+            className="aspect-[4/5] w-full bg-surface object-contain"
           />
         ) : (
           <div
             className={`flex aspect-[4/5] w-full items-end bg-gradient-to-br p-6 ${CATEGORY_GRADIENT[event.category]}`}
           >
-            <h2 className="font-display text-3xl font-black leading-[1.05] text-cream drop-shadow md:text-4xl">
+            <h2 className="font-display text-3xl font-black leading-[1.05] text-fore drop-shadow md:text-4xl">
               {event.title}
             </h2>
           </div>
@@ -140,7 +140,7 @@ export function EventCard({
                 .filter((r) => r.profile)
                 .slice(0, 3)
                 .map((r) => (
-                  <Avatar key={r.user_id} profile={r.profile!} size={22} className="ring-2 ring-ink" />
+                  <Avatar key={r.user_id} profile={r.profile!} size={22} className="ring-2 ring-canvas" />
                 ))}
             </div>
             <WhoIsIn going={going} past={past} />
@@ -153,12 +153,12 @@ export function EventCard({
           <Link href={href} className="font-display text-base font-bold leading-snug hover:underline">
             {event.title}
           </Link>
-          <p className="text-sm text-lilac-2">
+          <p className="text-sm text-muted-2">
             {relativeDay(event.starts_at, tz, now)} at {timeLabel(event.starts_at, tz)}
             {where ? `, ${where}` : ""}
           </p>
           {event.organizer_name && (
-            <p className="text-sm text-lilac">Put on by {event.organizer_name}</p>
+            <p className="text-sm text-muted">Put on by {event.organizer_name}</p>
           )}
         </div>
 
@@ -172,7 +172,7 @@ export function EventCard({
         )}
 
         {event.tags.length > 0 && (
-          <p className="text-sm text-lilac">
+          <p className="text-sm text-muted">
             {event.tags.slice(0, 4).map((t) => (
               <Link key={t} href={`/discover?q=${encodeURIComponent(t)}`} className="mr-2 hover:underline">
                 #{t.replace(/\s+/g, "")}
@@ -182,7 +182,7 @@ export function EventCard({
         )}
 
         {comments > 0 && (
-          <Link href={`${href}#comments-heading`} className="text-sm text-lilac hover:underline">
+          <Link href={`${href}#comments-heading`} className="text-sm text-muted hover:underline">
             View {comments === 1 ? "the plan" : `all ${comments} plans`}
           </Link>
         )}
@@ -210,7 +210,7 @@ export function EventListItem({
   const where = whereLabel(event);
 
   return (
-    <li className="flex items-center gap-3 border-b border-plum-2 py-3 last:border-0">
+    <li className="flex items-center gap-3 border-b border-edge py-3 last:border-0">
       <Link href={`/events/${event.id}`} aria-label={`Open ${event.title}`}>
         <DateBadge iso={event.starts_at} tz={tz} past={past} size="sm" />
       </Link>
@@ -218,7 +218,7 @@ export function EventListItem({
         <Link href={`/events/${event.id}`} className="block truncate font-semibold hover:underline">
           {event.title}
         </Link>
-        <p className="truncate text-sm text-lilac">
+        <p className="truncate text-sm text-muted">
           {timeLabel(event.starts_at, tz)}
           {where && ` at ${where}`}
           {showAuthor && (

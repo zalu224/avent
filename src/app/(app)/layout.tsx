@@ -15,7 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return (
       <div className="mx-auto max-w-md px-4 py-20 text-center">
         <h1 className="font-display text-xl font-bold">Setting up your profile</h1>
-        <p className="mt-2 text-lilac">
+        <p className="mt-2 text-muted">
           Your account exists but the profile hasn’t been created yet. Refresh in a moment, or
           sign out and back in.
         </p>

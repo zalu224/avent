@@ -93,8 +93,9 @@ async function viaGoogleGrounding(input: LookupInput): Promise<OrganizerLookup |
       model: google(id),
       tools: { google_search: google.tools.googleSearch({}) },
       prompt,
-      maxOutputTokens: 800,
+      maxOutputTokens: 2048,
       maxRetries: 0,
+      abortSignal: AbortSignal.timeout(40_000),
     });
     const parsed = foundSchema.parse(extractJson(result.text));
 
@@ -172,8 +173,10 @@ async function viaWebSearch(input: LookupInput): Promise<OrganizerLookup | null>
         model: provider.model,
         output: Output.object({ schema: foundSchema }),
         prompt,
-        maxOutputTokens: 600,
+        providerOptions: provider.providerOptions,
+        maxOutputTokens: 2048,
         maxRetries: 1,
+        abortSignal: AbortSignal.timeout(40_000),
       });
       if (!output) throw new Error("no structured output");
       const sources = results.map((r) => ({ url: r.url, title: r.title || null, host: hostOf(r.url) }));

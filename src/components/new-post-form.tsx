@@ -180,7 +180,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
                 type="button"
                 onClick={() => pickFile(null)}
                 aria-label="Remove photo"
-                className="absolute right-2 top-2 rounded-full bg-ink/80 p-1.5 text-cream hover:bg-ink"
+                className="absolute right-2 top-2 rounded-full bg-canvas/80 p-1.5 text-fore hover:bg-canvas"
               >
                 <X size={16} aria-hidden />
               </button>
@@ -190,11 +190,11 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
-            className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-plum-3 px-4 py-10 text-lilac-2 hover:border-lilac hover:text-cream"
+            className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-edge-2 px-4 py-10 text-muted-2 hover:border-muted hover:text-fore"
           >
             <ImagePlus size={28} aria-hidden />
             <span className="font-medium">Add the flyer or a photo</span>
-            <span className="text-sm text-lilac">Screenshots work too</span>
+            <span className="text-sm text-muted">Screenshots work too</span>
           </button>
         )}
 
@@ -239,7 +239,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
         )}
 
         {notice && (
-          <p role="status" className="mt-3 text-sm text-glow">
+          <p role="status" className="mt-3 text-sm text-glow-ink">
             {notice}
           </p>
         )}
@@ -251,7 +251,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
           <div className="flex items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-lg font-bold">Check the details</h2>
-              <p className="mt-1 text-sm text-lilac">
+              <p className="mt-1 text-sm text-muted">
                 {ai.used
                   ? `Filled in from the flyer${
                       ai.confidence !== null ? ` (${Math.round(ai.confidence * 100)}% sure)` : ""
@@ -259,8 +259,8 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
                   : "Fill in what you know. Only the title and start time are required."}
               </p>
               {ai.used && ai.lookup && (
-                <p className="mt-1 flex items-center gap-1.5 text-sm text-lilac-2">
-                  <ShieldCheck size={14} aria-hidden className={ai.lookup.found ? "text-glow" : ""} />
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-2">
+                  <ShieldCheck size={14} aria-hidden className={ai.lookup.found ? "text-glow-ink" : ""} />
                   {ai.lookup.attempted
                     ? ai.lookup.found
                       ? `Found the organizer on Google. ${verifiedCount} ${verifiedCount === 1 ? "link" : "links"} checked.`

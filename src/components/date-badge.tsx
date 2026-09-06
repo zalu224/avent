@@ -17,7 +17,7 @@ export function DateBadge({
       : size === "sm"
         ? "h-12 w-12 [--day:1.25rem] [--meta:0.6rem]"
         : "h-16 w-16 [--day:1.75rem] [--meta:0.7rem]";
-  const tone = past ? "bg-plum-2 text-lilac" : "bg-glow text-ink";
+  const tone = past ? "bg-edge text-muted" : "bg-glow text-fore";
 
   return (
     <time

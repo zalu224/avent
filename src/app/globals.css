@@ -1,48 +1,55 @@
 @import "tailwindcss";
 
+/*
+  Headcount palette: bright, warm white with a lavender tint, hot-pink
+  action colour and an amber "date" accent. Tokens are semantic so the
+  theme can change without touching components.
+*/
 @theme {
-  --color-ink: #13101f;
-  --color-plum: #1c1733;
-  --color-plum-2: #2a2349;
-  --color-plum-3: #3b3264;
-  --color-lilac: #a99ccf;
-  --color-lilac-2: #d4cbee;
-  --color-cream: #f7f3ff;
-  --color-flare: #ff4d7d;
-  --color-flare-deep: #e0325f;
-  --color-glow: #ffc857;
-  --color-glow-deep: #e5ab2e;
+  --color-canvas: #fbfaff; /* page background */
+  --color-surface: #ffffff; /* cards, rail, inputs */
+  --color-edge: #ebe7f6; /* hairlines, dividers */
+  --color-edge-2: #d6cfe9; /* stronger borders, input outlines */
+  --color-muted: #6f6790; /* secondary text */
+  --color-muted-2: #4a4368; /* secondary text, stronger */
+  --color-fore: #17132b; /* primary text */
+  --color-flare: #ff3d7f; /* primary action */
+  --color-flare-deep: #e6296a;
+  --color-glow: #ffc857; /* dates, "going" state */
+  --color-glow-deep: #f2b53a;
+  --color-glow-ink: #8a5a00; /* amber as text on light surfaces */
 
   --font-display: var(--font-unbounded), "Arial Black", Impact, sans-serif;
   --font-sans: var(--font-dm-sans), system-ui, -apple-system, sans-serif;
 
-  --radius-card: 14px;
+  --radius-card: 16px;
+  --shadow-card: 0 1px 2px rgb(23 19 43 / 0.04), 0 8px 24px -12px rgb(23 19 43 / 0.12);
 }
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
-  background: var(--color-ink);
+  background: var(--color-canvas);
 }
 
 body {
-  background: var(--color-ink);
-  color: var(--color-cream);
+  background: var(--color-canvas);
+  color: var(--color-fore);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-glow);
+  outline: 2px solid var(--color-flare);
   outline-offset: 2px;
 }
 
 ::selection {
-  background: var(--color-flare);
-  color: var(--color-ink);
+  background: var(--color-glow);
+  color: var(--color-fore);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -56,33 +63,33 @@ body {
 
 @layer components {
   .field {
-    @apply w-full rounded-lg border border-plum-3 bg-plum px-3 py-2.5 text-cream placeholder:text-lilac/60 focus:border-glow focus:outline-none;
+    @apply w-full rounded-xl border border-edge-2 bg-surface px-3 py-2.5 text-fore placeholder:text-muted/70 focus:border-flare focus:outline-none focus:ring-2 focus:ring-flare/20;
   }
   .field-label {
-    @apply mb-1.5 block text-sm font-medium text-lilac-2;
+    @apply mb-1.5 block text-sm font-medium text-muted-2;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50;
   }
   .btn-primary {
-    @apply bg-flare text-ink hover:bg-flare-deep;
+    @apply bg-flare text-white shadow-sm hover:bg-flare-deep;
   }
   .btn-glow {
-    @apply bg-glow text-ink hover:bg-glow-deep;
+    @apply bg-glow text-fore hover:bg-glow-deep;
   }
   .btn-outline {
-    @apply border border-plum-3 text-cream hover:border-lilac hover:bg-plum;
+    @apply border border-edge-2 bg-surface text-fore hover:border-muted hover:bg-canvas;
   }
   .btn-ghost {
-    @apply text-lilac-2 hover:bg-plum hover:text-cream;
+    @apply text-muted-2 hover:bg-edge/70 hover:text-fore;
   }
   .btn-danger {
-    @apply border border-flare/60 text-flare hover:bg-flare/10;
+    @apply border border-flare/50 text-flare hover:bg-flare/10;
   }
   .chip {
-    @apply inline-flex items-center rounded-full bg-plum-2 px-2.5 py-0.5 text-xs font-medium text-lilac-2;
+    @apply inline-flex items-center rounded-full bg-edge/70 px-2.5 py-0.5 text-xs font-medium text-muted-2;
   }
   .card {
-    @apply rounded-card border border-plum-2 bg-plum;
+    @apply rounded-card border border-edge bg-surface shadow-card;
   }
 }

@@ -43,17 +43,17 @@ function PeopleRows({
   emptyText: string;
 }) {
   if (people.length === 0) {
-    return <p className="px-2 py-10 text-center text-lilac-2">{emptyText}</p>;
+    return <p className="px-2 py-10 text-center text-muted-2">{emptyText}</p>;
   }
   return (
     <ul className="mt-2">
       {people.map((p) => (
-        <li key={p.id} className="flex items-center gap-3 border-b border-plum-2 py-3 last:border-0">
+        <li key={p.id} className="flex items-center gap-3 border-b border-edge py-3 last:border-0">
           <Link href={`/u/${p.username}`} className="flex min-w-0 flex-1 items-center gap-3">
             <Avatar profile={p} size={40} />
             <span className="min-w-0">
               <span className="block truncate font-semibold">{p.display_name || p.username}</span>
-              <span className="block truncate text-sm text-lilac">@{p.username}</span>
+              <span className="block truncate text-sm text-muted">@{p.username}</span>
             </span>
           </Link>
           {p.id !== currentUserId && (
@@ -126,27 +126,27 @@ export default async function ProfilePage({
               <FollowButton targetId={profile.id} following={myFollowing.has(profile.id)} />
             )}
           </div>
-          <p className="text-lilac">@{profile.username}</p>
+          <p className="text-muted">@{profile.username}</p>
           {profile.city && (
-            <p className="mt-1 flex items-center gap-1 text-sm text-lilac-2">
+            <p className="mt-1 flex items-center gap-1 text-sm text-muted-2">
               <MapPin size={14} aria-hidden /> {profile.city}
             </p>
           )}
           {profile.bio && <p className="mt-2 leading-relaxed">{profile.bio}</p>}
-          <p className="mt-3 text-sm text-lilac-2">
-            <span className="font-semibold text-cream">{stats.beenTo}</span>{" "}
+          <p className="mt-3 text-sm text-muted-2">
+            <span className="font-semibold text-fore">{stats.beenTo}</span>{" "}
             {stats.beenTo === 1 ? "event" : "events"} been to
-            <span className="mx-2 text-plum-3" aria-hidden>
+            <span className="mx-2 text-edge-2" aria-hidden>
               |
             </span>
-            <span className="font-semibold text-cream">{stats.posts}</span>{" "}
+            <span className="font-semibold text-fore">{stats.posts}</span>{" "}
             {stats.posts === 1 ? "flyer" : "flyers"} posted
           </p>
         </div>
       </header>
 
       <nav className="-mx-4 mt-8 overflow-x-auto px-4 md:mx-0 md:px-0" aria-label="Profile sections">
-        <div className="flex gap-1 border-b border-plum-2">
+        <div className="flex gap-1 border-b border-edge">
           {tabs.map((t) => (
             <Link
               key={t.key}
@@ -156,11 +156,11 @@ export default async function ProfilePage({
               aria-current={tab === t.key ? "page" : undefined}
               className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-sm font-medium ${
                 tab === t.key
-                  ? "border-glow text-cream"
-                  : "border-transparent text-lilac hover:text-cream"
+                  ? "border-glow text-fore"
+                  : "border-transparent text-muted hover:text-fore"
               }`}
             >
-              {t.label} <span className="text-lilac">{t.count}</span>
+              {t.label} <span className="text-muted">{t.count}</span>
             </Link>
           ))}
         </div>
@@ -195,7 +195,7 @@ export default async function ProfilePage({
 
           if (list.length === 0) {
             return (
-              <p className="px-2 py-10 text-center text-lilac-2">
+              <p className="px-2 py-10 text-center text-muted-2">
                 {tab === "posts"
                   ? isMe
                     ? "You haven’t posted a flyer yet."
@@ -222,7 +222,7 @@ export default async function ProfilePage({
                 ))}
               </ul>
               {tab === "been" && (
-                <p className="mt-4 text-sm text-lilac">
+                <p className="mt-4 text-sm text-muted">
                   {pluralize(beenList.length, "night")} out and counting.
                 </p>
               )}

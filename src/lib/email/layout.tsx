@@ -13,16 +13,20 @@ import {
 } from "@react-email/components";
 import type { ReactNode } from "react";
 
-/** Brand tokens mirrored from globals.css. Email clients need literal values. */
+/**
+ * Brand tokens mirrored from globals.css (light theme). Email clients need
+ * literal values, so the names here map: ink=page, plum=card, plum2/3=borders,
+ * lilac/lilac2=secondary text, cream=primary text.
+ */
 export const brand = {
-  ink: "#13101f",
-  plum: "#1c1733",
-  plum2: "#2a2349",
-  plum3: "#3b3264",
-  lilac: "#a99ccf",
-  lilac2: "#d4cbee",
-  cream: "#f7f3ff",
-  flare: "#ff4d7d",
+  ink: "#fbfaff",
+  plum: "#ffffff",
+  plum2: "#ebe7f6",
+  plum3: "#d6cfe9",
+  lilac: "#6f6790",
+  lilac2: "#4a4368",
+  cream: "#17132b",
+  flare: "#ff3d7f",
   glow: "#ffc857",
 } as const;
 
@@ -53,8 +57,9 @@ export const styles = {
   card: {
     backgroundColor: brand.plum,
     border: `1px solid ${brand.plum2}`,
-    borderRadius: "14px",
+    borderRadius: "16px",
     padding: "28px 28px 24px",
+    boxShadow: "0 8px 24px -12px rgba(23,19,43,0.12)",
   },
   heading: {
     fontFamily: displayFont,
@@ -78,7 +83,7 @@ export const styles = {
   },
   button: {
     backgroundColor: brand.flare,
-    color: brand.ink,
+    color: "#ffffff",
     fontFamily: bodyFont,
     fontSize: "15px",
     fontWeight: 700 as const,
@@ -111,7 +116,7 @@ export const styles = {
     textAlign: "center" as const,
   },
   link: {
-    color: brand.glow,
+    color: brand.flare,
     textDecoration: "underline",
   },
 } as const;

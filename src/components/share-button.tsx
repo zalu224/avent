@@ -36,7 +36,7 @@ export function ShareButton({
         type="button"
         onClick={share}
         aria-label={copied ? "Link copied" : "Share"}
-        className={`btn btn-ghost px-2 ${copied ? "text-glow" : ""}`}
+        className={`btn btn-ghost px-2 ${copied ? "text-glow-ink" : ""}`}
       >
         {copied ? <Check size={20} aria-hidden /> : <Send size={20} aria-hidden />}
       </button>
