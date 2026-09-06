@@ -2,43 +2,15 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { ImagePlus, Sparkles, X } from "lucide-react";
+import { EMPTY_EVENT_FIELDS, EventFieldInputs, type EventFields } from "./event-fields";
 import { analyzeFlyer, createEvent, type CreateEventState } from "@/lib/actions/events";
 import type { ExtractedEvent } from "@/lib/ai/extract-event";
 import { prepareImage } from "@/lib/image";
 import { createClient } from "@/lib/supabase/client";
-import { CATEGORY_LABELS, EVENT_CATEGORIES, type EventCategory } from "@/lib/types";
-
-type Fields = {
-  title: string;
-  category: EventCategory;
-  starts_at_local: string;
-  ends_at_local: string;
-  venue_name: string;
-  address: string;
-  city: string;
-  lineup: string;
-  price: string;
-  ticket_url: string;
-  description: string;
-};
-
-const EMPTY: Fields = {
-  title: "",
-  category: "other",
-  starts_at_local: "",
-  ends_at_local: "",
-  venue_name: "",
-  address: "",
-  city: "",
-  lineup: "",
-  price: "",
-  ticket_url: "",
-  description: "",
-};
 
 type Upload = { url: string; path: string };
 
-function fieldsFromExtraction(e: ExtractedEvent, prev: Fields): Fields {
+function fieldsFromExtraction(e: ExtractedEvent, prev: EventFields): EventFields {
   const start = e.date ? `${e.date}T${e.start_time ?? "21:00"}` : prev.starts_at_local;
   let end = prev.ends_at_local;
   if (e.date && e.end_time) {
@@ -66,12 +38,15 @@ function fieldsFromExtraction(e: ExtractedEvent, prev: Fields): Fields {
   };
 }
 
-export function NewPostForm({ userId }: { userId: string }) {
+export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCity?: string | null }) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [upload, setUpload] = useState<Upload | null>(null);
   const [caption, setCaption] = useState("");
-  const [fields, setFields] = useState<Fields>(EMPTY);
+  const [fields, setFields] = useState<EventFields>({
+    ...EMPTY_EVENT_FIELDS,
+    city: defaultCity ?? "",
+  });
   const [step, setStep] = useState<"compose" | "review">("compose");
   const [busy, setBusy] = useState<"upload" | "analyze" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -86,7 +61,8 @@ export function NewPostForm({ userId }: { userId: string }) {
     {}
   );
 
-  const tz = typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
+  const tz =
+    typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
 
   // Release the previous preview URL whenever it changes or on unmount.
   useEffect(() => {
@@ -160,9 +136,6 @@ export function NewPostForm({ userId }: { userId: string }) {
     if (file && !uploaded) return;
     setStep("review");
   }
-
-  const update = (key: keyof Fields) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-    setFields((f) => ({ ...f, [key]: e.target.value }));
 
   return (
     <div className="flex flex-col gap-6">
@@ -284,174 +257,7 @@ export function NewPostForm({ userId }: { userId: string }) {
           <input type="hidden" name="ai_extracted" value={ai.used ? "true" : "false"} />
           <input type="hidden" name="ai_confidence" value={ai.confidence ?? ""} />
 
-          <div>
-            <label htmlFor="title" className="field-label">
-              Title
-            </label>
-            <input
-              id="title"
-              name="title"
-              required
-              maxLength={120}
-              value={fields.title}
-              onChange={update("title")}
-              className="field"
-              placeholder="Boiler Room x Warehouse Project"
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="starts_at_local" className="field-label">
-                Starts
-              </label>
-              <input
-                id="starts_at_local"
-                name="starts_at_local"
-                type="datetime-local"
-                required
-                value={fields.starts_at_local}
-                onChange={update("starts_at_local")}
-                className="field"
-              />
-            </div>
-            <div>
-              <label htmlFor="ends_at_local" className="field-label">
-                Ends <span className="text-lilac">(optional)</span>
-              </label>
-              <input
-                id="ends_at_local"
-                name="ends_at_local"
-                type="datetime-local"
-                value={fields.ends_at_local}
-                onChange={update("ends_at_local")}
-                className="field"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="category" className="field-label">
-                Type
-              </label>
-              <select
-                id="category"
-                name="category"
-                value={fields.category}
-                onChange={update("category")}
-                className="field"
-              >
-                {EVENT_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {CATEGORY_LABELS[c]}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label htmlFor="price" className="field-label">
-                Price
-              </label>
-              <input
-                id="price"
-                name="price"
-                maxLength={80}
-                value={fields.price}
-                onChange={update("price")}
-                className="field"
-                placeholder="$20 · free before 11"
-              />
-            </div>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="venue_name" className="field-label">
-                Venue
-              </label>
-              <input
-                id="venue_name"
-                name="venue_name"
-                maxLength={120}
-                value={fields.venue_name}
-                onChange={update("venue_name")}
-                className="field"
-              />
-            </div>
-            <div>
-              <label htmlFor="city" className="field-label">
-                City
-              </label>
-              <input
-                id="city"
-                name="city"
-                maxLength={80}
-                value={fields.city}
-                onChange={update("city")}
-                className="field"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="address" className="field-label">
-              Address
-            </label>
-            <input
-              id="address"
-              name="address"
-              maxLength={200}
-              value={fields.address}
-              onChange={update("address")}
-              className="field"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="lineup" className="field-label">
-              Lineup <span className="text-lilac">(comma separated)</span>
-            </label>
-            <input
-              id="lineup"
-              name="lineup"
-              value={fields.lineup}
-              onChange={update("lineup")}
-              className="field"
-              placeholder="Peggy Gou, Fred again.."
-            />
-          </div>
-
-          <div>
-            <label htmlFor="ticket_url" className="field-label">
-              Ticket link
-            </label>
-            <input
-              id="ticket_url"
-              name="ticket_url"
-              inputMode="url"
-              maxLength={500}
-              value={fields.ticket_url}
-              onChange={update("ticket_url")}
-              className="field"
-              placeholder="ra.co/events/…"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="description" className="field-label">
-              About
-            </label>
-            <textarea
-              id="description"
-              name="description"
-              rows={3}
-              maxLength={2000}
-              value={fields.description}
-              onChange={update("description")}
-              className="field resize-y"
-            />
-          </div>
+          <EventFieldInputs fields={fields} onChange={setFields} />
 
           {state.error && (
             <p role="alert" className="text-sm text-flare">

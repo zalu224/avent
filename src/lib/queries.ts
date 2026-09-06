@@ -1,6 +1,7 @@
 import type { SupabaseServerClient } from "@/lib/supabase/server";
 import type {
   CommentWithAuthor,
+  EventCategory,
   EventWithMeta,
   Profile,
   ProfileLite,
@@ -202,4 +203,69 @@ export async function getProfilesByIds(db: Db, ids: string[]): Promise<ProfileLi
   if (ids.length === 0) return [];
   const { data } = await db.from("profiles").select(PROFILE_LITE).in("id", ids);
   return (data as ProfileLite[]) ?? [];
+}
+
+export async function getFollowers(db: Db, userId: string): Promise<ProfileLite[]> {
+  const { data } = await db
+    .from("follows")
+    .select(`created_at, profile:profiles!follows_follower_id_fkey(${PROFILE_LITE})`)
+    .eq("following_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(300);
+  const rows = (data as unknown as { profile: ProfileLite | null }[]) ?? [];
+  return rows.map((r) => r.profile).filter((p): p is ProfileLite => Boolean(p));
+}
+
+export async function getFollowing(db: Db, userId: string): Promise<ProfileLite[]> {
+  const { data } = await db
+    .from("follows")
+    .select(`created_at, profile:profiles!follows_following_id_fkey(${PROFILE_LITE})`)
+    .eq("follower_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(300);
+  const rows = (data as unknown as { profile: ProfileLite | null }[]) ?? [];
+  return rows.map((r) => r.profile).filter((p): p is ProfileLite => Boolean(p));
+}
+
+/** Upcoming events from everyone, optionally narrowed to a city and category. */
+export async function getDiscoverEvents(
+  db: Db,
+  opts: { city: string | null; category: EventCategory | null; limit?: number }
+): Promise<EventWithMeta[]> {
+  let query = db
+    .from("events")
+    .select(EVENT_SELECT)
+    .gte("starts_at", new Date().toISOString())
+    .order("starts_at", { ascending: true })
+    .limit(opts.limit ?? 100);
+
+  if (opts.city) {
+    const safe = opts.city.replace(/[%_*\\,()]/g, "").trim();
+    if (safe) query = query.ilike("city", safe);
+  }
+  if (opts.category) query = query.eq("category", opts.category);
+
+  const { data } = await query;
+  return (data as unknown as EventWithMeta[]) ?? [];
+}
+
+/** Cities with upcoming events, most active first. */
+export async function getCityCounts(db: Db, limit = 8): Promise<{ city: string; count: number }[]> {
+  const { data } = await db
+    .from("events")
+    .select("city")
+    .gte("starts_at", new Date().toISOString())
+    .not("city", "is", null)
+    .limit(1000);
+
+  const counts = new Map<string, { city: string; count: number }>();
+  for (const row of data ?? []) {
+    const raw = String(row.city ?? "").trim();
+    if (!raw) continue;
+    const key = raw.toLowerCase();
+    const entry = counts.get(key);
+    if (entry) entry.count += 1;
+    else counts.set(key, { city: raw, count: 1 });
+  }
+  return [...counts.values()].sort((a, b) => b.count - a.count).slice(0, limit);
 }

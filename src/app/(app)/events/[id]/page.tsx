@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ExternalLink } from "lucide-react";
+import { CalendarPlus, Download, ExternalLink, Pencil } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { CategoryChip } from "@/components/category-chip";
 import { Comments } from "@/components/comments";
@@ -10,8 +10,11 @@ import { DateBadge } from "@/components/date-badge";
 import { DeleteEventButton } from "@/components/delete-event-button";
 import { whereLabel } from "@/components/event-card";
 import { RsvpButtons } from "@/components/rsvp-buttons";
+import { ShareButton } from "@/components/share-button";
+import { googleCalendarUrl } from "@/lib/calendar-links";
 import { fmt, isPast, relativeDay, timeAgo, timeLabel } from "@/lib/format";
 import { getComments, getEvent } from "@/lib/queries";
+import { getSiteUrl } from "@/lib/site";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 import { getTimeZone } from "@/lib/timezone";
 import type { RsvpLite } from "@/lib/types";
@@ -65,9 +68,14 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
   const tz = await getTimeZone();
   const now = new Date();
 
-  const [event, comments] = await Promise.all([getEvent(supabase, id), getComments(supabase, id)]);
+  const [event, comments, siteUrl] = await Promise.all([
+    getEvent(supabase, id),
+    getComments(supabase, id),
+    getSiteUrl(),
+  ]);
   if (!event) notFound();
 
+  const eventUrl = `${siteUrl}/events/${event.id}`;
   const past = isPast(event.starts_at, now);
   const mine = event.rsvps.find((r) => r.user_id === userId)?.status ?? null;
   const going = event.rsvps.filter((r) => r.status === "going" || r.status === "went");
@@ -116,7 +124,28 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
             Tickets <ExternalLink size={14} aria-hidden />
           </a>
         )}
+        <ShareButton title={event.title} />
       </div>
+
+      {!past && (
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <span className="text-lilac">Add to your calendar</span>
+          <a
+            href={googleCalendarUrl(event, eventUrl)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-lilac-2 hover:text-cream hover:underline"
+          >
+            <CalendarPlus size={14} aria-hidden /> Google Calendar
+          </a>
+          <a
+            href={`/events/${event.id}/calendar.ics`}
+            className="inline-flex items-center gap-1 text-lilac-2 hover:text-cream hover:underline"
+          >
+            <Download size={14} aria-hidden /> Apple / Outlook (.ics)
+          </a>
+        </div>
+      )}
 
       <dl className="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-2">
         {event.address && (
@@ -181,7 +210,10 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       <Comments eventId={event.id} comments={comments} currentUserId={userId} />
 
       {isAuthor && (
-        <div className="mt-10 flex justify-end border-t border-plum-2 pt-4">
+        <div className="mt-10 flex flex-wrap items-center justify-end gap-2 border-t border-plum-2 pt-4">
+          <Link href={`/events/${event.id}/edit`} className="btn btn-outline text-sm">
+            <Pencil size={14} aria-hidden /> Edit
+          </Link>
           <DeleteEventButton eventId={event.id} />
         </div>
       )}

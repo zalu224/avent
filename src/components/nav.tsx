@@ -2,16 +2,33 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Compass, LogOut, Plus, Settings, Users } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Compass,
+  LogOut,
+  Newspaper,
+  Plus,
+  Settings,
+  Users,
+} from "lucide-react";
 import { Avatar } from "./avatar";
 import { signOut } from "@/lib/actions/auth";
 import type { ProfileLite } from "@/lib/types";
 
-const ITEMS = [
-  { href: "/feed", label: "Feed", icon: Compass },
+const DESKTOP_ITEMS = [
+  { href: "/feed", label: "Feed", icon: Newspaper },
+  { href: "/discover", label: "Discover", icon: Compass },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/events/new", label: "Post", icon: Plus },
   { href: "/people", label: "People", icon: Users },
+  { href: "/activity", label: "Activity", icon: Bell },
+] as const;
+
+const MOBILE_ITEMS = [
+  { href: "/feed", label: "Feed", icon: Newspaper },
+  { href: "/discover", label: "Discover", icon: Compass },
+  { href: "/events/new", label: "Post", icon: Plus },
+  { href: "/calendar", label: "Calendar", icon: CalendarDays },
 ] as const;
 
 export function Nav({ profile }: { profile: ProfileLite }) {
@@ -26,25 +43,29 @@ export function Nav({ profile }: { profile: ProfileLite }) {
         <Link href="/feed" className="font-display text-xl font-black tracking-tight">
           Headcount
         </Link>
-        <nav className="mt-8 flex flex-col gap-1" aria-label="Main">
-          {ITEMS.map(({ href, label, icon: Icon }) => {
+
+        <Link
+          href="/events/new"
+          aria-current={isActive("/events/new") ? "page" : undefined}
+          className="mt-7 flex items-center justify-center gap-2 rounded-full bg-flare px-4 py-2.5 font-semibold text-ink hover:bg-flare-deep"
+        >
+          <Plus size={18} aria-hidden /> Post a flyer
+        </Link>
+
+        <nav className="mt-6 flex flex-col gap-1" aria-label="Main">
+          {DESKTOP_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = isActive(href);
-            const isPost = href === "/events/new";
             return (
               <Link
                 key={href}
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium transition-colors ${
-                  isPost
-                    ? "mt-3 bg-flare text-ink hover:bg-flare-deep"
-                    : active
-                      ? "bg-plum text-cream"
-                      : "text-lilac-2 hover:bg-plum hover:text-cream"
+                  active ? "bg-plum text-cream" : "text-lilac-2 hover:bg-plum hover:text-cream"
                 }`}
               >
                 <Icon size={20} aria-hidden />
-                {isPost ? "Post a flyer" : label}
+                {label}
               </Link>
             );
           })}
@@ -81,12 +102,35 @@ export function Nav({ profile }: { profile: ProfileLite }) {
         </div>
       </aside>
 
+      {/* Mobile top bar: people + activity */}
+      <div className="flex items-center justify-between px-4 pt-4 md:hidden">
+        <Link href="/feed" className="font-display text-lg font-black tracking-tight">
+          Headcount
+        </Link>
+        <div className="flex items-center gap-1">
+          <Link
+            href="/people"
+            aria-label="People"
+            className={`rounded-full p-2 ${isActive("/people") ? "bg-plum text-cream" : "text-lilac-2"}`}
+          >
+            <Users size={20} aria-hidden />
+          </Link>
+          <Link
+            href="/activity"
+            aria-label="Activity"
+            className={`rounded-full p-2 ${isActive("/activity") ? "bg-plum text-cream" : "text-lilac-2"}`}
+          >
+            <Bell size={20} aria-hidden />
+          </Link>
+        </div>
+      </div>
+
       {/* Mobile tab bar */}
       <nav
         aria-label="Main"
         className="fixed inset-x-0 bottom-0 z-20 grid grid-cols-5 border-t border-plum-2 bg-ink/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden"
       >
-        {ITEMS.map(({ href, label, icon: Icon }) => {
+        {MOBILE_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           const isPost = href === "/events/new";
           return (

@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getSupabaseEnv } from "./env";
+import { getSupabaseEnv, isSupabaseConfigured } from "./env";
 
 function isPublicPath(pathname: string) {
   return (
@@ -16,6 +16,10 @@ function isPublicPath(pathname: string) {
  * app's auth redirects. Runs from src/proxy.ts.
  */
 export async function updateSession(request: NextRequest) {
+  // Before the database integration is connected, let pages render their
+  // own "not connected yet" state instead of failing every request.
+  if (!isSupabaseConfigured()) return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
   const { url, key } = getSupabaseEnv();
 

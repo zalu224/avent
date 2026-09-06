@@ -1,12 +1,15 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient } from "@/lib/supabase/server";
 import { getSiteUrl } from "@/lib/site";
 
 export type AuthState = { error?: string; message?: string };
 
 const USERNAME_RE = /^[a-z0-9_]{3,24}$/;
+const NOT_CONNECTED =
+  "Headcount isn’t connected to its database yet. Try again once setup is finished.";
 
 function safeNext(value: FormDataEntryValue | null) {
   const next = typeof value === "string" ? value : "";
@@ -24,6 +27,7 @@ export async function signUp(_prev: AuthState, formData: FormData): Promise<Auth
     return { error: "Usernames are 3–24 characters: lowercase letters, numbers and underscores." };
   }
   if (password.length < 8) return { error: "Passwords need at least 8 characters." };
+  if (!isSupabaseConfigured()) return { error: NOT_CONNECTED };
 
   const supabase = await createClient();
 
@@ -58,6 +62,7 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
   const next = safeNext(formData.get("next"));
 
   if (!email || !password) return { error: "Enter your email and password." };
+  if (!isSupabaseConfigured()) return { error: NOT_CONNECTED };
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -73,6 +78,7 @@ export async function signIn(_prev: AuthState, formData: FormData): Promise<Auth
 }
 
 export async function signOut() {
+  if (!isSupabaseConfigured()) redirect("/login");
   const supabase = await createClient();
   await supabase.auth.signOut();
   redirect("/login");

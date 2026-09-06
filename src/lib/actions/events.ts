@@ -52,7 +52,7 @@ const optionalText = (max: number) =>
     .max(max)
     .transform((s) => (s.length ? s : null));
 
-const createEventSchema = z.object({
+const eventFieldsSchema = z.object({
   title: z.string().trim().min(1, "Give the event a title.").max(120),
   category: z.enum(EVENT_CATEGORIES),
   starts_at_local: z
@@ -68,30 +68,33 @@ const createEventSchema = z.object({
   description: optionalText(2000),
   caption: optionalText(2000),
   lineup: z.string().optional().default(""),
+});
+
+const createEventSchema = eventFieldsSchema.extend({
   image_url: optionalText(1000),
   image_path: optionalText(500),
   ai_extracted: z.string().optional().default("false"),
   ai_confidence: z.string().optional().default(""),
 });
 
+const updateEventSchema = eventFieldsSchema.extend({
+  id: z.string().uuid(),
+});
+
 export type CreateEventState = { error?: string };
 
-export async function createEvent(
-  _prev: CreateEventState,
-  formData: FormData
-): Promise<CreateEventState> {
-  const userId = await requireUserId();
-
+function formToRecord(formData: FormData) {
   const raw: Record<string, string> = {};
   formData.forEach((value, key) => {
     if (typeof value === "string") raw[key] = value;
   });
+  return raw;
+}
 
-  const parsed = createEventSchema.safeParse(raw);
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
-  }
-  const v = parsed.data;
+type EventValues = z.infer<typeof eventFieldsSchema>;
+
+/** Turns validated form values into a row payload, or returns a user-facing error. */
+function toEventRow(v: EventValues) {
   const tz = isValidTimeZone(v.tz) ? v.tz : "UTC";
 
   let starts_at: string;
@@ -100,14 +103,10 @@ export async function createEvent(
     starts_at = localInputToIso(v.starts_at_local, tz);
     if (v.ends_at_local) ends_at = localInputToIso(v.ends_at_local, tz);
   } catch {
-    return { error: "That date doesn't look right." };
+    return { error: "That date doesn't look right." } as const;
   }
   if (ends_at && ends_at <= starts_at) {
-    return { error: "The end time has to be after the start." };
-  }
-
-  if (v.image_url && !v.image_url.startsWith(eventImagePublicPrefix())) {
-    return { error: "Upload the flyer through Headcount first." };
+    return { error: "The end time has to be after the start." } as const;
   }
 
   let ticket_url = v.ticket_url;
@@ -119,13 +118,8 @@ export async function createEvent(
     .filter(Boolean)
     .slice(0, 30);
 
-  const confidence = Number.parseFloat(v.ai_confidence);
-
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("events")
-    .insert({
-      author_id: userId,
+  return {
+    row: {
       title: v.title,
       caption: v.caption,
       description: v.description,
@@ -138,6 +132,37 @@ export async function createEvent(
       lineup,
       price: v.price,
       ticket_url,
+    },
+  } as const;
+}
+
+export async function createEvent(
+  _prev: CreateEventState,
+  formData: FormData
+): Promise<CreateEventState> {
+  const userId = await requireUserId();
+
+  const parsed = createEventSchema.safeParse(formToRecord(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
+  }
+  const v = parsed.data;
+
+  const built = toEventRow(v);
+  if ("error" in built) return { error: built.error };
+
+  if (v.image_url && !v.image_url.startsWith(eventImagePublicPrefix())) {
+    return { error: "Upload the flyer through Headcount first." };
+  }
+
+  const confidence = Number.parseFloat(v.ai_confidence);
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("events")
+    .insert({
+      ...built.row,
+      author_id: userId,
       image_url: v.image_url,
       image_path: v.image_path,
       ai_extracted: v.ai_extracted === "true",
@@ -158,7 +183,44 @@ export async function createEvent(
 
   revalidatePath("/feed");
   revalidatePath("/calendar");
+  revalidatePath("/discover");
   redirect(`/events/${data.id}`);
+}
+
+export async function updateEvent(
+  _prev: CreateEventState,
+  formData: FormData
+): Promise<CreateEventState> {
+  const userId = await requireUserId();
+
+  const parsed = updateEventSchema.safeParse(formToRecord(formData));
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form and try again." };
+  }
+  const v = parsed.data;
+
+  const built = toEventRow(v);
+  if ("error" in built) return { error: built.error };
+
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("events")
+    .update(built.row)
+    .match({ id: v.id, author_id: userId })
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    console.error("updateEvent failed", error);
+    return { error: "Couldn't save your changes. Try again." };
+  }
+  if (!data) return { error: "Only the person who posted this can edit it." };
+
+  revalidatePath("/feed");
+  revalidatePath("/calendar");
+  revalidatePath("/discover");
+  revalidatePath(`/events/${v.id}`);
+  redirect(`/events/${v.id}`);
 }
 
 export async function setRsvp(eventId: string, status: RsvpStatus | null) {
@@ -176,6 +238,7 @@ export async function setRsvp(eventId: string, status: RsvpStatus | null) {
 
   revalidatePath("/feed");
   revalidatePath("/calendar");
+  revalidatePath("/discover");
   revalidatePath(`/events/${eventId}`);
   revalidatePath("/u/[username]", "page");
 }
@@ -199,6 +262,7 @@ export async function addComment(
   if (error) return { error: "Couldn't post that comment." };
 
   revalidatePath(`/events/${eventId}`);
+  revalidatePath("/activity");
   return { savedAt: Date.now() };
 }
 
@@ -227,5 +291,6 @@ export async function deleteEvent(eventId: string) {
 
   revalidatePath("/feed");
   revalidatePath("/calendar");
+  revalidatePath("/discover");
   redirect("/feed");
 }

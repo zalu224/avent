@@ -8,15 +8,19 @@ import { FollowButton } from "@/components/follow-button";
 import { isPast, pluralize } from "@/lib/format";
 import {
   getEventsByAuthor,
+  getFollowers,
+  getFollowing,
+  getFollowingIds,
   getProfileByUsername,
   getProfileStats,
   getRsvpedEvents,
-  isFollowing,
 } from "@/lib/queries";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 import { getTimeZone } from "@/lib/timezone";
+import type { ProfileLite } from "@/lib/types";
 
-type Tab = "posts" | "going" | "been";
+type Tab = "posts" | "going" | "been" | "followers" | "following";
+const TABS: Tab[] = ["posts", "going", "been", "followers", "following"];
 
 export async function generateMetadata({
   params,
@@ -27,6 +31,40 @@ export async function generateMetadata({
   return { title: `@${username}` };
 }
 
+function PeopleRows({
+  people,
+  myFollowing,
+  currentUserId,
+  emptyText,
+}: {
+  people: ProfileLite[];
+  myFollowing: Set<string>;
+  currentUserId: string;
+  emptyText: string;
+}) {
+  if (people.length === 0) {
+    return <p className="px-2 py-10 text-center text-lilac-2">{emptyText}</p>;
+  }
+  return (
+    <ul className="mt-2">
+      {people.map((p) => (
+        <li key={p.id} className="flex items-center gap-3 border-b border-plum-2 py-3 last:border-0">
+          <Link href={`/u/${p.username}`} className="flex min-w-0 flex-1 items-center gap-3">
+            <Avatar profile={p} size={40} />
+            <span className="min-w-0">
+              <span className="block truncate font-semibold">{p.display_name || p.username}</span>
+              <span className="block truncate text-sm text-lilac">@{p.username}</span>
+            </span>
+          </Link>
+          {p.id !== currentUserId && (
+            <FollowButton targetId={p.id} following={myFollowing.has(p.id)} size="sm" />
+          )}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export default async function ProfilePage({
   params,
   searchParams,
@@ -35,7 +73,7 @@ export default async function ProfilePage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   const [{ username }, { tab: tabParam }] = await Promise.all([params, searchParams]);
-  const tab: Tab = tabParam === "going" || tabParam === "been" ? tabParam : "posts";
+  const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : "posts";
 
   const userId = await requireUserId();
   const supabase = await createClient();
@@ -46,12 +84,15 @@ export default async function ProfilePage({
   if (!profile) notFound();
 
   const isMe = profile.id === userId;
-  const [stats, following, posts, rsvps] = await Promise.all([
+  const [stats, myFollowingIds, posts, rsvps, followers, following] = await Promise.all([
     getProfileStats(supabase, profile.id),
-    isMe ? Promise.resolve(false) : isFollowing(supabase, userId, profile.id),
+    getFollowingIds(supabase, userId),
     getEventsByAuthor(supabase, profile.id),
     getRsvpedEvents(supabase, profile.id),
+    tab === "followers" ? getFollowers(supabase, profile.id) : Promise.resolve([]),
+    tab === "following" ? getFollowing(supabase, profile.id) : Promise.resolve([]),
   ]);
+  const myFollowing = new Set(myFollowingIds);
 
   const goingList = rsvps
     .filter((r) => !isPast(r.event.starts_at, now))
@@ -60,13 +101,15 @@ export default async function ProfilePage({
     (r) => isPast(r.event.starts_at, now) && (r.status === "going" || r.status === "went")
   );
 
-  const TABS: { key: Tab; label: string; count: number }[] = [
+  const tabs: { key: Tab; label: string; count: number }[] = [
     { key: "posts", label: "Posts", count: posts.length },
     { key: "going", label: "Going", count: goingList.length },
     { key: "been", label: "Been to", count: beenList.length },
+    { key: "followers", label: "Followers", count: stats.followers },
+    { key: "following", label: "Following", count: stats.following },
   ];
 
-  const list = tab === "posts" ? posts : tab === "going" ? goingList.map((r) => r.event) : beenList.map((r) => r.event);
+  const name = profile.display_name || profile.username;
 
   return (
     <>
@@ -74,15 +117,13 @@ export default async function ProfilePage({
         <Avatar profile={profile} size={88} />
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-3">
-            <h1 className="font-display text-2xl font-bold leading-tight">
-              {profile.display_name || profile.username}
-            </h1>
+            <h1 className="font-display text-2xl font-bold leading-tight">{name}</h1>
             {isMe ? (
               <Link href="/settings" className="btn btn-outline text-sm">
                 Edit profile
               </Link>
             ) : (
-              <FollowButton targetId={profile.id} following={following} />
+              <FollowButton targetId={profile.id} following={myFollowing.has(profile.id)} />
             )}
           </div>
           <p className="text-lilac">@{profile.username}</p>
@@ -93,69 +134,101 @@ export default async function ProfilePage({
           )}
           {profile.bio && <p className="mt-2 leading-relaxed">{profile.bio}</p>}
           <p className="mt-3 text-sm text-lilac-2">
-            <span className="font-semibold text-cream">{stats.followers}</span>{" "}
-            {stats.followers === 1 ? "follower" : "followers"}
-            {"  "}
-            <span className="mx-2 text-plum-3" aria-hidden>
-              |
-            </span>
-            <span className="font-semibold text-cream">{stats.following}</span> following
-            <span className="mx-2 text-plum-3" aria-hidden>
-              |
-            </span>
             <span className="font-semibold text-cream">{stats.beenTo}</span>{" "}
             {stats.beenTo === 1 ? "event" : "events"} been to
+            <span className="mx-2 text-plum-3" aria-hidden>
+              |
+            </span>
+            <span className="font-semibold text-cream">{stats.posts}</span>{" "}
+            {stats.posts === 1 ? "flyer" : "flyers"} posted
           </p>
         </div>
       </header>
 
-      <nav className="mt-8 flex gap-1 border-b border-plum-2" aria-label="Profile sections">
-        {TABS.map((t) => (
-          <Link
-            key={t.key}
-            href={t.key === "posts" ? `/u/${profile.username}` : `/u/${profile.username}?tab=${t.key}`}
-            aria-current={tab === t.key ? "page" : undefined}
-            className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
-              tab === t.key
-                ? "border-glow text-cream"
-                : "border-transparent text-lilac hover:text-cream"
-            }`}
-          >
-            {t.label} <span className="text-lilac">{t.count}</span>
-          </Link>
-        ))}
+      <nav className="-mx-4 mt-8 overflow-x-auto px-4 md:mx-0 md:px-0" aria-label="Profile sections">
+        <div className="flex gap-1 border-b border-plum-2">
+          {tabs.map((t) => (
+            <Link
+              key={t.key}
+              href={
+                t.key === "posts" ? `/u/${profile.username}` : `/u/${profile.username}?tab=${t.key}`
+              }
+              aria-current={tab === t.key ? "page" : undefined}
+              className={`-mb-px shrink-0 border-b-2 px-3 py-2 text-sm font-medium ${
+                tab === t.key
+                  ? "border-glow text-cream"
+                  : "border-transparent text-lilac hover:text-cream"
+              }`}
+            >
+              {t.label} <span className="text-lilac">{t.count}</span>
+            </Link>
+          ))}
+        </div>
       </nav>
 
-      {list.length === 0 ? (
-        <p className="px-2 py-10 text-center text-lilac-2">
-          {tab === "posts"
-            ? isMe
-              ? "You haven’t posted a flyer yet."
-              : `${profile.display_name || profile.username} hasn’t posted yet.`
-            : tab === "going"
-              ? "Nothing coming up."
-              : "No events logged yet. Mark past events as “Went” to build the list."}
-        </p>
-      ) : (
-        <ul className="mt-2">
-          {list.map((e) => (
-            <EventListItem
-              key={e.id}
-              event={e}
-              tz={tz}
-              currentUserId={userId}
-              now={now}
-              showAuthor={tab !== "posts"}
-            />
-          ))}
-        </ul>
+      {tab === "followers" && (
+        <PeopleRows
+          people={followers}
+          myFollowing={myFollowing}
+          currentUserId={userId}
+          emptyText={isMe ? "No followers yet. Share your profile with friends." : `${name} has no followers yet.`}
+        />
       )}
 
-      {tab === "been" && beenList.length > 0 && (
-        <p className="mt-4 text-sm text-lilac">
-          {pluralize(beenList.length, "night")} out and counting.
-        </p>
+      {tab === "following" && (
+        <PeopleRows
+          people={following}
+          myFollowing={myFollowing}
+          currentUserId={userId}
+          emptyText={isMe ? "You’re not following anyone yet." : `${name} isn’t following anyone yet.`}
+        />
       )}
+
+      {(tab === "posts" || tab === "going" || tab === "been") &&
+        (() => {
+          const list =
+            tab === "posts"
+              ? posts
+              : tab === "going"
+                ? goingList.map((r) => r.event)
+                : beenList.map((r) => r.event);
+
+          if (list.length === 0) {
+            return (
+              <p className="px-2 py-10 text-center text-lilac-2">
+                {tab === "posts"
+                  ? isMe
+                    ? "You haven’t posted a flyer yet."
+                    : `${name} hasn’t posted yet.`
+                  : tab === "going"
+                    ? "Nothing coming up."
+                    : "No events logged yet. Mark past events as “Went” to build the list."}
+              </p>
+            );
+          }
+
+          return (
+            <>
+              <ul className="mt-2">
+                {list.map((e) => (
+                  <EventListItem
+                    key={e.id}
+                    event={e}
+                    tz={tz}
+                    currentUserId={userId}
+                    now={now}
+                    showAuthor={tab !== "posts"}
+                  />
+                ))}
+              </ul>
+              {tab === "been" && (
+                <p className="mt-4 text-sm text-lilac">
+                  {pluralize(beenList.length, "night")} out and counting.
+                </p>
+              )}
+            </>
+          );
+        })()}
     </>
   );
 }

@@ -5,8 +5,11 @@ event on your friends' calendars, and shows you who's in, so nobody goes alone.
 
 - **Follow friends** and see the events they post in your feed and on a shared calendar.
 - **Post a flyer**: upload the photo, Claude extracts title, date, venue, lineup and price; you
-  confirm and post.
+  confirm and post. Authors can edit or delete their posts.
 - **I'm in / Maybe**: RSVP, see the headcount, and plan in the thread on each event.
+- **Discover**: every upcoming event on Headcount, filtered by city and type.
+- **Activity**: new followers, RSVPs on your posts, and replies on plans you're part of.
+- **Add to calendar**: Google Calendar link or an `.ics` download on every event, plus share links.
 - **Been to**: past events you marked as going become your going-out history.
 
 ## Stack
@@ -54,6 +57,14 @@ Optional:
 - `AI_GATEWAY_API_KEY`: only needed outside Vercel if you don't have `VERCEL_OIDC_TOKEN`
 - `EVENT_EXTRACTION_MODEL`: override the vision model (default `anthropic/claude-sonnet-5`)
 
+## Deployment notes
+
+- New Vercel projects protect the `*.vercel.app` production URL with Vercel Authentication. To
+  make the site public, set Project Settings → Deployment Protection → Vercel Authentication to
+  "Only Preview Deployments", or attach a custom domain.
+- Until the Supabase integration has populated the env vars, the app renders a "not connected"
+  notice instead of failing. Redeploy after the integration is attached.
+
 ## Auth notes
 
 - Email + password sign-in. New Supabase projects require email confirmation; turn it off under
@@ -66,7 +77,8 @@ Optional:
 
 ```
 src/app/(auth)        login, signup
-src/app/(app)         feed, calendar, events/new, events/[id], u/[username], people, settings
+src/app/(app)         feed, discover, calendar, activity, events/new, events/[id] (+ edit, calendar.ics),
+                      u/[username], people, settings
 src/app/auth/callback email confirmation handler
 src/lib/actions       server actions (auth, events, social)
 src/lib/ai            flyer extraction (AI SDK structured output)

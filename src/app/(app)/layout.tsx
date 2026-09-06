@@ -1,8 +1,12 @@
 import { Nav } from "@/components/nav";
+import { NotConnected } from "@/components/not-connected";
 import { getProfileById } from "@/lib/queries";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  if (!isSupabaseConfigured()) return <NotConnected />;
+
   const userId = await requireUserId();
   const supabase = await createClient();
   const profile = await getProfileById(supabase, userId);
