@@ -150,8 +150,10 @@ export async function verifyLink(
   const normalized = normalizeUrl(raw);
   if (!normalized) return null;
 
+  // Only unwrap known shorteners. Following every redirect would turn links to
+  // login-walled sites (Instagram, Facebook) into their login pages.
   const startHost = hostOf(normalized);
-  const final = SHORTENERS.has(startHost) || source !== "user" ? await resolveRedirects(normalized) : normalized;
+  const final = SHORTENERS.has(startHost) ? await resolveRedirects(normalized) : normalized;
   const finalNormalized = normalizeUrl(final);
   if (!finalNormalized) return null;
 
