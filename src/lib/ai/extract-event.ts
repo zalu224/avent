@@ -1,3 +1,4 @@
+import { createAnthropic } from "@ai-sdk/anthropic";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 import { EVENT_CATEGORIES } from "@/lib/types";
@@ -40,9 +41,23 @@ export const extractedEventSchema = z.object({
 
 export type ExtractedEvent = z.infer<typeof extractedEventSchema>;
 
-/** Vision-capable model routed through Vercel AI Gateway. */
+/** Vision-capable model id, "provider/model" for the gateway. */
 export const EXTRACTION_MODEL =
   process.env.EVENT_EXTRACTION_MODEL ?? "anthropic/claude-sonnet-5";
+
+/**
+ * Model resolution: Vercel AI Gateway by default (OIDC on Vercel, or
+ * AI_GATEWAY_API_KEY). If ANTHROPIC_API_KEY is set, call Anthropic directly
+ * instead, which avoids needing gateway billing.
+ */
+function resolveModel() {
+  if (process.env.ANTHROPIC_API_KEY) {
+    const anthropic = createAnthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const id = EXTRACTION_MODEL.replace(/^anthropic\//, "");
+    return anthropic(id);
+  }
+  return EXTRACTION_MODEL;
+}
 
 type Input = {
   imageUrl?: string;
@@ -74,7 +89,7 @@ export async function extractEventFromImage(input: Input): Promise<ExtractedEven
   });
 
   const { output } = await generateText({
-    model: EXTRACTION_MODEL,
+    model: resolveModel(),
     output: Output.object({ schema: extractedEventSchema }),
     messages: [{ role: "user", content }],
     maxOutputTokens: 1024,
