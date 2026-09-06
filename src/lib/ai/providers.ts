@@ -84,6 +84,14 @@ export function visionProviders(): VisionProvider[] {
   return list;
 }
 
+/**
+ * Text-only tasks (reading search results, picking links) can use the same
+ * chain; every vision model here handles plain text too.
+ */
+export function textProviders(): VisionProvider[] {
+  return visionProviders();
+}
+
 export function describeProviders() {
   return visionProviders().map((p) => p.label);
 }

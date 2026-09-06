@@ -78,12 +78,20 @@ Optional:
 `src/lib/ai/providers.ts` builds a chain of vision models from whichever keys are set, and the
 flyer is read by the first one that works:
 
-1. **Google Gemini** (`GOOGLE_GENERATIVE_AI_API_KEY`, free tier from AI Studio). Also the only
-   provider that can look up the event: `find-organizer.ts` runs a second Gemini call with Google
-   Search grounding to find the real promoter, the official event page and the ticket link.
+1. **Google Gemini** (`GOOGLE_GENERATIVE_AI_API_KEY`, free tier from AI Studio).
 2. **Qwen VL on OpenRouter** (`OPENROUTER_API_KEY`), cheap and hosted but flyer-only.
 3. **Qwen VL on Ollama** (`OLLAMA_BASE_URL`), free on your own machine, local dev only.
 4. **Anthropic** (`ANTHROPIC_API_KEY`) and finally **Vercel AI Gateway**.
+
+### Finding the organizer
+
+`find-organizer.ts` looks the event up on the web to find the real promoter, the official event
+page and the ticket link. It first tries Gemini's Google Search grounding (only works on a billed
+Gemini key; free keys get "resource exhausted"), then falls back to a search API, Tavily
+(`TAVILY_API_KEY`, free tier) or Brave (`BRAVE_SEARCH_API_KEY`), whose results are handed to
+whichever text model is configured. That is how a flyer-only model like Qwen still "knows" about
+the event: it reads the search results. Any link the model proposes must match a host the search
+actually returned.
 
 ### Link safety
 
