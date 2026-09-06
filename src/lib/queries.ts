@@ -249,6 +249,36 @@ export async function getDiscoverEvents(
   return (data as unknown as EventWithMeta[]) ?? [];
 }
 
+/**
+ * Ranked free-text search over titles, lineups, tags, venues, cities and
+ * descriptions (see search_events() in the database). Optional city/category
+ * narrowing is applied on top.
+ */
+export async function searchEvents(
+  db: Db,
+  opts: { q: string; city: string | null; category: EventCategory | null; limit?: number }
+): Promise<EventWithMeta[]> {
+  const q = opts.q.trim().slice(0, 120);
+  if (!q) return [];
+
+  let query = db
+    .rpc("search_events", { q, only_upcoming: true, max_results: opts.limit ?? 60 })
+    .select(EVENT_SELECT);
+
+  if (opts.city) {
+    const safe = opts.city.replace(/[%_*\\,()]/g, "").trim();
+    if (safe) query = query.ilike("city", safe);
+  }
+  if (opts.category) query = query.eq("category", opts.category);
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("searchEvents failed", error);
+    return [];
+  }
+  return (data as unknown as EventWithMeta[]) ?? [];
+}
+
 /** Cities with upcoming events, most active first. */
 export async function getCityCounts(db: Db, limit = 8): Promise<{ city: string; count: number }[]> {
   const { data } = await db

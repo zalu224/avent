@@ -166,6 +166,18 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
             <dd>{event.lineup.join(", ")}</dd>
           </div>
         )}
+        {event.tags.length > 0 && (
+          <div className="sm:col-span-2">
+            <dt className="text-sm text-lilac">Tags</dt>
+            <dd className="mt-1 flex flex-wrap gap-1.5">
+              {event.tags.map((t) => (
+                <Link key={t} href={`/discover?q=${encodeURIComponent(t)}`} className="chip hover:bg-plum-3">
+                  {t}
+                </Link>
+              ))}
+            </dd>
+          </div>
+        )}
         <div>
           <dt className="text-sm text-lilac">Full date</dt>
           <dd>{fmt(event.starts_at, tz, "EEEE, MMMM d, yyyy")}</dd>

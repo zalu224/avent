@@ -56,8 +56,13 @@ export function EventCard({
             {relativeDay(event.starts_at, tz, now)} at {timeLabel(event.starts_at, tz)}
           </p>
           {where && <p className="text-lilac-2">{where}</p>}
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             <CategoryChip category={event.category} />
+            {event.tags.slice(0, 3).map((t) => (
+              <Link key={t} href={`/discover?q=${encodeURIComponent(t)}`} className="chip hover:bg-plum-3">
+                {t}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

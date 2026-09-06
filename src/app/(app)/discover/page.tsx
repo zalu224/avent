@@ -1,41 +1,55 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Search } from "lucide-react";
 import { EventListItem } from "@/components/event-card";
 import { PageHeading } from "@/components/page-heading";
 import { dayKey, fmt } from "@/lib/format";
-import { getCityCounts, getDiscoverEvents, getProfileById } from "@/lib/queries";
+import { getCityCounts, getDiscoverEvents, getProfileById, searchEvents } from "@/lib/queries";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 import { getTimeZone } from "@/lib/timezone";
-import { CATEGORY_LABELS, EVENT_CATEGORIES, type EventCategory, type EventWithMeta } from "@/lib/types";
+import {
+  CATEGORY_LABELS,
+  EVENT_CATEGORIES,
+  type EventCategory,
+  type EventWithMeta,
+} from "@/lib/types";
 
-export const metadata: Metadata = { title: "Discover" };
+export const metadata: Metadata = { title: "Search" };
+
+const EXAMPLES = ["techno", "comedy", "rooftop", "21+", "karaoke"];
 
 export default async function DiscoverPage({
   searchParams,
 }: {
-  searchParams: Promise<{ city?: string; cat?: string }>;
+  searchParams: Promise<{ q?: string; city?: string; cat?: string }>;
 }) {
-  const { city: cityParam, cat } = await searchParams;
+  const { q: qParam, city: cityParam, cat } = await searchParams;
   const userId = await requireUserId();
   const supabase = await createClient();
   const tz = await getTimeZone();
   const now = new Date();
 
+  const q = (qParam ?? "").trim().slice(0, 120);
   const category = EVENT_CATEGORIES.includes(cat as EventCategory) ? (cat as EventCategory) : null;
   const [profile, cities] = await Promise.all([
     getProfileById(supabase, userId),
     getCityCounts(supabase),
   ]);
 
-  // Default to the viewer's own city when it has anything on.
+  // Browsing defaults to the viewer's own city when it has anything on;
+  // searching looks everywhere unless a city is chosen explicitly.
   const city =
     cityParam !== undefined
       ? cityParam
-      : profile?.city && cities.some((c) => c.city.toLowerCase() === profile.city!.toLowerCase())
+      : !q &&
+          profile?.city &&
+          cities.some((c) => c.city.toLowerCase() === profile.city!.toLowerCase())
         ? profile.city
         : "";
 
-  const events = await getDiscoverEvents(supabase, { city: city || null, category });
+  const events = q
+    ? await searchEvents(supabase, { q, city: city || null, category })
+    : await getDiscoverEvents(supabase, { city: city || null, category });
 
   const byDay = new Map<string, EventWithMeta[]>();
   for (const e of events) {
@@ -43,21 +57,75 @@ export default async function DiscoverPage({
     byDay.set(key, [...(byDay.get(key) ?? []), e]);
   }
 
-  const href = (nextCity: string, nextCat: EventCategory | null) => {
+  const href = (next: { q?: string; city?: string; cat?: EventCategory | null }) => {
     const p = new URLSearchParams();
-    if (nextCity !== null) p.set("city", nextCity);
-    if (nextCat) p.set("cat", nextCat);
+    const nq = next.q ?? q;
+    const ncity = next.city ?? city;
+    const ncat = next.cat === undefined ? category : next.cat;
+    if (nq) p.set("q", nq);
+    if (ncity || (cityParam !== undefined && ncity === "")) p.set("city", ncity);
+    if (ncat) p.set("cat", ncat);
     const qs = p.toString();
     return `/discover${qs ? `?${qs}` : ""}`;
   };
 
+  const emptyText = q
+    ? `Nothing matches “${q}”${city ? ` in ${city}` : ""}${
+        category ? ` under ${CATEGORY_LABELS[category].toLowerCase()}` : ""
+      }.`
+    : city
+      ? `No upcoming events in ${city}${
+          category ? ` for ${CATEGORY_LABELS[category].toLowerCase()}` : ""
+        }.`
+      : "No upcoming events yet.";
+
   return (
     <>
-      <PageHeading title="Discover" sub="Everything posted on Headcount, by city" />
+      <PageHeading
+        title="Find something to go to"
+        sub="Search any event on Headcount, then say you’re in"
+      />
+
+      <form action="/discover" method="get" role="search" className="mb-4">
+        {city && <input type="hidden" name="city" value={city} />}
+        {category && <input type="hidden" name="cat" value={category} />}
+        <label htmlFor="q" className="sr-only">
+          Search events
+        </label>
+        <div className="relative">
+          <Search
+            size={18}
+            aria-hidden
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lilac"
+          />
+          <input
+            id="q"
+            name="q"
+            type="search"
+            defaultValue={q}
+            autoComplete="off"
+            placeholder="Artist, venue, party name, genre…"
+            className="field py-3 pl-10 pr-24 text-base"
+          />
+          <button type="submit" className="btn btn-primary absolute right-1.5 top-1/2 -translate-y-1/2 py-1.5">
+            Search
+          </button>
+        </div>
+        {!q && (
+          <p className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-lilac">
+            Try
+            {EXAMPLES.map((ex) => (
+              <Link key={ex} href={href({ q: ex })} className="chip hover:bg-plum-3">
+                {ex}
+              </Link>
+            ))}
+          </p>
+        )}
+      </form>
 
       <div className="mb-3 flex flex-wrap gap-2" role="group" aria-label="City">
         <Link
-          href={href("", category)}
+          href={href({ city: "" })}
           aria-current={city === "" ? "true" : undefined}
           className={`btn text-sm ${city === "" ? "btn-glow" : "btn-outline"}`}
         >
@@ -68,7 +136,7 @@ export default async function DiscoverPage({
           return (
             <Link
               key={c.city}
-              href={href(c.city, category)}
+              href={href({ city: c.city })}
               aria-current={active ? "true" : undefined}
               className={`btn text-sm ${active ? "btn-glow" : "btn-outline"}`}
             >
@@ -80,7 +148,7 @@ export default async function DiscoverPage({
 
       <div className="mb-6 flex flex-wrap gap-2" role="group" aria-label="Type">
         <Link
-          href={href(city, null)}
+          href={href({ cat: null })}
           aria-current={!category ? "true" : undefined}
           className={`chip ${!category ? "bg-cream text-ink" : "hover:bg-plum-3"}`}
         >
@@ -89,7 +157,7 @@ export default async function DiscoverPage({
         {EVENT_CATEGORIES.map((c) => (
           <Link
             key={c}
-            href={href(city, c)}
+            href={href({ cat: c })}
             aria-current={category === c ? "true" : undefined}
             className={`chip ${category === c ? "bg-cream text-ink" : "hover:bg-plum-3"}`}
           >
@@ -98,20 +166,38 @@ export default async function DiscoverPage({
         ))}
       </div>
 
+      {q && events.length > 0 && (
+        <p className="mb-3 text-sm text-lilac">
+          {events.length === 1 ? "1 event" : `${events.length} events`} for “{q}”
+        </p>
+      )}
+
       {events.length === 0 ? (
         <div className="card px-5 py-10 text-center">
-          <h2 className="font-display text-lg font-bold">Nothing coming up here</h2>
+          <h2 className="font-display text-lg font-bold">
+            {q ? "No matches" : "Nothing coming up here"}
+          </h2>
           <p className="mx-auto mt-2 max-w-sm text-lilac-2">
-            {city ? `No upcoming events in ${city}${category ? ` for ${CATEGORY_LABELS[category].toLowerCase()}` : ""}.` : "No upcoming events yet."}{" "}
-            Post a flyer and it shows up for everyone.
+            {emptyText} If you know about it, post the flyer and it shows up for everyone.
           </p>
-          <Link href="/events/new" className="btn btn-primary mt-5">
-            Post a flyer
-          </Link>
+          <div className="mt-5 flex justify-center gap-3">
+            {q && (
+              <Link href={href({ q: "", city: "", cat: null })} className="btn btn-outline">
+                Clear search
+              </Link>
+            )}
+            <Link href="/events/new" className="btn btn-primary">
+              Post a flyer
+            </Link>
+          </div>
         </div>
       ) : (
         [...byDay.entries()].map(([key, dayEvents]) => (
-          <section key={key} className="mb-6" aria-label={fmt(dayEvents[0].starts_at, tz, "EEEE, MMMM d")}>
+          <section
+            key={key}
+            className="mb-6"
+            aria-label={fmt(dayEvents[0].starts_at, tz, "EEEE, MMMM d")}
+          >
             <h2 className="mb-1 font-display text-base font-bold">
               {fmt(dayEvents[0].starts_at, tz, "EEEE, MMMM d")}
             </h2>

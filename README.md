@@ -7,7 +7,10 @@ event on your friends' calendars, and shows you who's in, so nobody goes alone.
 - **Post a flyer**: upload the photo, Claude extracts title, date, venue, lineup and price; you
   confirm and post. Authors can edit or delete their posts.
 - **I'm in / Maybe**: RSVP, see the headcount, and plan in the thread on each event.
-- **Discover**: every upcoming event on Headcount, filtered by city and type.
+- **Search**: find any event by artist, venue, party name, genre or tag, filter by city and type,
+  and say you're in straight from the results. Claude tags each flyer with genres and vibes so
+  searches like "techno" or "21+" work. Ranked full-text + trigram search lives in Postgres
+  (`search_events()`), so partial words match too.
 - **Activity**: new followers, RSVPs on your posts, and replies on plans you're part of.
 - **Add to calendar**: Google Calendar link or an `.ics` download on every event, plus share links.
 - **Been to**: past events you marked as going become your going-out history.

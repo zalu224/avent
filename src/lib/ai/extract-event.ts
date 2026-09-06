@@ -17,6 +17,11 @@ export const extractedEventSchema = z.object({
   lineup: z
     .array(z.string())
     .describe("Performers, DJs, artists, teams or hosts named, in billing order"),
+  tags: z
+    .array(z.string())
+    .describe(
+      "Up to 6 short lowercase tags people would search for: genres (techno, hip-hop, indie), vibes (rooftop, warehouse, drag, karaoke), age limits (18+, 21+), recurring series names"
+    ),
   price: z
     .string()
     .nullable()
@@ -61,6 +66,7 @@ export async function extractEventFromImage(input: Input): Promise<ExtractedEven
       `Today is ${input.today} in ${input.timeZone}. If a flyer shows a day and month with no year, pick the next occurrence on or after today. If it shows a weekday only, pick the next such weekday.`,
       "Convert times like 'doors 9pm' or '10PM-4AM' into 24-hour HH:MM start and end times. Leave a field null when it is not visible or stated. Never invent a venue, city or price.",
       "Use the category that best fits; 'club' is for DJ nights at venues, 'rave' for warehouse or underground parties, 'party' for house or private parties.",
+      "Add tags that would help someone find this event by searching: music genres, the kind of night it is, age limit, and the name of the promoter or series if printed.",
       input.caption?.trim()
         ? `The poster's caption may add or override details:\n"""${input.caption.trim()}"""`
         : "The poster did not write a caption.",

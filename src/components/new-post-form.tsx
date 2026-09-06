@@ -32,6 +32,7 @@ function fieldsFromExtraction(e: ExtractedEvent, prev: EventFields): EventFields
     address: e.address ?? prev.address,
     city: e.city ?? prev.city,
     lineup: e.lineup.length ? e.lineup.join(", ") : prev.lineup,
+    tags: e.tags.length ? e.tags.join(", ") : prev.tags,
     price: e.price ?? prev.price,
     ticket_url: e.ticket_url ?? prev.ticket_url,
     description: e.description ?? prev.description,

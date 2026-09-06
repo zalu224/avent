@@ -58,6 +58,7 @@ export type EventRow = {
   starts_at: string;
   ends_at: string | null;
   lineup: string[];
+  tags: string[];
   price: string | null;
   ticket_url: string | null;
   image_url: string | null;

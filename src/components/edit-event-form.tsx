@@ -17,6 +17,7 @@ export function EditEventForm({ event, tz }: { event: EventRow; tz: string }) {
     address: event.address ?? "",
     city: event.city ?? "",
     lineup: event.lineup.join(", "),
+    tags: event.tags.join(", "),
     price: event.price ?? "",
     ticket_url: event.ticket_url ?? "",
     description: event.description ?? "",

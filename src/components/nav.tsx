@@ -5,10 +5,10 @@ import { usePathname } from "next/navigation";
 import {
   Bell,
   CalendarDays,
-  Compass,
   LogOut,
   Newspaper,
   Plus,
+  Search,
   Settings,
   Users,
 } from "lucide-react";
@@ -18,7 +18,7 @@ import type { ProfileLite } from "@/lib/types";
 
 const DESKTOP_ITEMS = [
   { href: "/feed", label: "Feed", icon: Newspaper },
-  { href: "/discover", label: "Discover", icon: Compass },
+  { href: "/discover", label: "Search events", icon: Search },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
   { href: "/people", label: "People", icon: Users },
   { href: "/activity", label: "Activity", icon: Bell },
@@ -26,7 +26,7 @@ const DESKTOP_ITEMS = [
 
 const MOBILE_ITEMS = [
   { href: "/feed", label: "Feed", icon: Newspaper },
-  { href: "/discover", label: "Discover", icon: Compass },
+  { href: "/discover", label: "Search", icon: Search },
   { href: "/events/new", label: "Post", icon: Plus },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
 ] as const;

@@ -68,7 +68,22 @@ const eventFieldsSchema = z.object({
   description: optionalText(2000),
   caption: optionalText(2000),
   lineup: z.string().optional().default(""),
+  tags: z.string().optional().default(""),
 });
+
+function splitList(value: string, max: number, lowercase = false) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of value.split(/[,\n]/)) {
+    const item = (lowercase ? raw.toLowerCase() : raw).trim().replace(/^#/, "").slice(0, 60);
+    const key = item.toLowerCase();
+    if (!item || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+    if (out.length >= max) break;
+  }
+  return out;
+}
 
 const createEventSchema = eventFieldsSchema.extend({
   image_url: optionalText(1000),
@@ -112,11 +127,8 @@ function toEventRow(v: EventValues) {
   let ticket_url = v.ticket_url;
   if (ticket_url && !/^https?:\/\//i.test(ticket_url)) ticket_url = `https://${ticket_url}`;
 
-  const lineup = v.lineup
-    .split(/[,\n]/)
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 30);
+  const lineup = splitList(v.lineup, 30);
+  const tags = splitList(v.tags, 12, true);
 
   return {
     row: {
@@ -130,6 +142,7 @@ function toEventRow(v: EventValues) {
       starts_at,
       ends_at,
       lineup,
+      tags,
       price: v.price,
       ticket_url,
     },

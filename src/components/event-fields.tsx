@@ -11,6 +11,7 @@ export type EventFields = {
   address: string;
   city: string;
   lineup: string;
+  tags: string;
   price: string;
   ticket_url: string;
   description: string;
@@ -25,6 +26,7 @@ export const EMPTY_EVENT_FIELDS: EventFields = {
   address: "",
   city: "",
   lineup: "",
+  tags: "",
   price: "",
   ticket_url: "",
   description: "",
@@ -180,6 +182,20 @@ export function EventFieldInputs({
           onChange={update("lineup")}
           className="field"
           placeholder="Peggy Gou, Fred again.."
+        />
+      </div>
+
+      <div>
+        <label htmlFor="tags" className="field-label">
+          Tags <span className="text-lilac">(genres, vibes, 21+)</span>
+        </label>
+        <input
+          id="tags"
+          name="tags"
+          value={fields.tags}
+          onChange={update("tags")}
+          className="field"
+          placeholder="techno, warehouse, 21+"
         />
       </div>
 
