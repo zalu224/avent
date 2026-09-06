@@ -9,6 +9,7 @@ import { Comments } from "@/components/comments";
 import { DateBadge } from "@/components/date-badge";
 import { DeleteEventButton } from "@/components/delete-event-button";
 import { whereLabel } from "@/components/event-card";
+import { EventLinks } from "@/components/event-links";
 import { RsvpButtons } from "@/components/rsvp-buttons";
 import { ShareButton } from "@/components/share-button";
 import { googleCalendarUrl } from "@/lib/calendar-links";
@@ -118,7 +119,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
           <a
             href={event.ticket_url}
             target="_blank"
-            rel="noopener noreferrer"
+            rel="noopener noreferrer nofollow ugc"
             className="btn btn-outline"
           >
             Tickets <ExternalLink size={14} aria-hidden />
@@ -187,6 +188,8 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       {event.description && (
         <p className="mt-5 whitespace-pre-line leading-relaxed">{event.description}</p>
       )}
+
+      <EventLinks event={event} />
 
       <section className="mt-8 flex gap-3 border-t border-plum-2 pt-6">
         <Link href={`/u/${event.author.username}`} className="shrink-0">

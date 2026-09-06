@@ -14,6 +14,9 @@ export type EventFields = {
   tags: string;
   price: string;
   ticket_url: string;
+  organizer_name: string;
+  organizer_url: string;
+  event_url: string;
   description: string;
 };
 
@@ -29,6 +32,9 @@ export const EMPTY_EVENT_FIELDS: EventFields = {
   tags: "",
   price: "",
   ticket_url: "",
+  organizer_name: "",
+  organizer_url: "",
+  event_url: "",
   description: "",
 };
 
@@ -199,21 +205,74 @@ export function EventFieldInputs({
         />
       </div>
 
-      <div>
-        <label htmlFor="ticket_url" className="field-label">
-          Ticket link
-        </label>
-        <input
-          id="ticket_url"
-          name="ticket_url"
-          inputMode="url"
-          maxLength={500}
-          value={fields.ticket_url}
-          onChange={update("ticket_url")}
-          className="field"
-          placeholder="ra.co/events/…"
-        />
-      </div>
+      <fieldset className="rounded-lg border border-plum-3 p-3">
+        <legend className="px-1 text-sm font-medium text-lilac-2">Who’s putting it on</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="organizer_name" className="field-label">
+              Organizer
+            </label>
+            <input
+              id="organizer_name"
+              name="organizer_name"
+              maxLength={120}
+              value={fields.organizer_name}
+              onChange={update("organizer_name")}
+              className="field"
+              placeholder="Promoter, collective or venue"
+            />
+          </div>
+          <div>
+            <label htmlFor="organizer_url" className="field-label">
+              Organizer link
+            </label>
+            <input
+              id="organizer_url"
+              name="organizer_url"
+              inputMode="url"
+              maxLength={500}
+              value={fields.organizer_url}
+              onChange={update("organizer_url")}
+              className="field"
+              placeholder="instagram.com/…"
+            />
+          </div>
+          <div>
+            <label htmlFor="event_url" className="field-label">
+              Official event page
+            </label>
+            <input
+              id="event_url"
+              name="event_url"
+              inputMode="url"
+              maxLength={500}
+              value={fields.event_url}
+              onChange={update("event_url")}
+              className="field"
+              placeholder="ra.co/events/…"
+            />
+          </div>
+          <div>
+            <label htmlFor="ticket_url" className="field-label">
+              Ticket link
+            </label>
+            <input
+              id="ticket_url"
+              name="ticket_url"
+              inputMode="url"
+              maxLength={500}
+              value={fields.ticket_url}
+              onChange={update("ticket_url")}
+              className="field"
+              placeholder="dice.fm/…"
+            />
+          </div>
+        </div>
+        <p className="mt-2 text-xs text-lilac">
+          Links are checked before they’re shown: only web addresses, shorteners are unwrapped,
+          and anything flagged as unsafe is dropped.
+        </p>
+      </fieldset>
 
       <div>
         <label htmlFor="description" className="field-label">

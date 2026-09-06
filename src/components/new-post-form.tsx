@@ -1,16 +1,17 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { ImagePlus, Sparkles, X } from "lucide-react";
+import { ImagePlus, ShieldCheck, Sparkles, X } from "lucide-react";
 import { EMPTY_EVENT_FIELDS, EventFieldInputs, type EventFields } from "./event-fields";
-import { analyzeFlyer, createEvent, type CreateEventState } from "@/lib/actions/events";
+import { analyzeFlyer, createEvent, type AnalyzeResult, type CreateEventState } from "@/lib/actions/events";
 import type { ExtractedEvent } from "@/lib/ai/extract-event";
 import { prepareImage } from "@/lib/image";
 import { createClient } from "@/lib/supabase/client";
 
 type Upload = { url: string; path: string };
+type Analysis = Extract<AnalyzeResult, { ok: true }>;
 
-function fieldsFromExtraction(e: ExtractedEvent, prev: EventFields): EventFields {
+function fieldsFromExtraction(e: ExtractedEvent, links: Analysis["links"], prev: EventFields): EventFields {
   const start = e.date ? `${e.date}T${e.start_time ?? "21:00"}` : prev.starts_at_local;
   let end = prev.ends_at_local;
   if (e.date && e.end_time) {
@@ -34,7 +35,10 @@ function fieldsFromExtraction(e: ExtractedEvent, prev: EventFields): EventFields
     lineup: e.lineup.length ? e.lineup.join(", ") : prev.lineup,
     tags: e.tags.length ? e.tags.join(", ") : prev.tags,
     price: e.price ?? prev.price,
-    ticket_url: e.ticket_url ?? prev.ticket_url,
+    ticket_url: links.ticket_url ?? prev.ticket_url,
+    organizer_name: links.organizer_name ?? prev.organizer_name,
+    organizer_url: links.organizer_url ?? prev.organizer_url,
+    event_url: links.event_url ?? prev.event_url,
     description: e.description ?? prev.description,
   };
 }
@@ -51,10 +55,14 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
   const [step, setStep] = useState<"compose" | "review">("compose");
   const [busy, setBusy] = useState<"upload" | "analyze" | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [ai, setAi] = useState<{ used: boolean; confidence: number | null }>({
-    used: false,
-    confidence: null,
-  });
+  const [ai, setAi] = useState<{
+    used: boolean;
+    confidence: number | null;
+    provider: string | null;
+    lookup: Analysis["lookup"] | null;
+    linkToken: string;
+    checks: Analysis["linkChecks"];
+  }>({ used: false, confidence: null, provider: null, lookup: null, linkToken: "", checks: {} });
   const fileInput = useRef<HTMLInputElement>(null);
 
   const [state, formAction, submitting] = useActionState<CreateEventState, FormData>(
@@ -120,8 +128,15 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
         if (!result.event.is_event) {
           setNotice("That doesn't look like an event flyer. You can still fill in the details.");
         }
-        setFields((prev) => fieldsFromExtraction(result.event, prev));
-        setAi({ used: true, confidence: result.event.confidence });
+        setFields((prev) => fieldsFromExtraction(result.event, result.links, prev));
+        setAi({
+          used: true,
+          confidence: result.event.confidence,
+          provider: result.provider,
+          lookup: result.lookup,
+          linkToken: result.linkToken,
+          checks: result.linkChecks,
+        });
       } else {
         setNotice(result.error);
       }
@@ -137,6 +152,8 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
     if (file && !uploaded) return;
     setStep("review");
   }
+
+  const verifiedCount = Object.keys(ai.checks).length;
 
   return (
     <div className="flex flex-col gap-6">
@@ -207,7 +224,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
               {busy === "upload"
                 ? "Uploading…"
                 : busy === "analyze"
-                  ? "Reading the flyer…"
+                  ? "Reading the flyer and checking links…"
                   : "Read the flyer"}
             </button>
             <button
@@ -241,6 +258,16 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
                     }. Fix anything that's off.`
                   : "Fill in what you know. Only the title and start time are required."}
               </p>
+              {ai.used && ai.lookup && (
+                <p className="mt-1 flex items-center gap-1.5 text-sm text-lilac-2">
+                  <ShieldCheck size={14} aria-hidden className={ai.lookup.found ? "text-glow" : ""} />
+                  {ai.lookup.attempted
+                    ? ai.lookup.found
+                      ? `Found the organizer on Google. ${verifiedCount} ${verifiedCount === 1 ? "link" : "links"} checked.`
+                      : "Couldn't find this event on Google yet, so only links printed on the flyer were kept."
+                    : "Organizer lookup is off (no Google key), so only links printed on the flyer were kept."}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -257,6 +284,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
           <input type="hidden" name="image_path" value={upload?.path ?? ""} />
           <input type="hidden" name="ai_extracted" value={ai.used ? "true" : "false"} />
           <input type="hidden" name="ai_confidence" value={ai.confidence ?? ""} />
+          <input type="hidden" name="link_token" value={ai.linkToken} />
 
           <EventFieldInputs fields={fields} onChange={setFields} />
 

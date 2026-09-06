@@ -63,12 +63,25 @@ export type EventRow = {
   tags: string[];
   price: string | null;
   ticket_url: string | null;
+  organizer_name: string | null;
+  organizer_url: string | null;
+  event_url: string | null;
+  link_checks: Record<string, LinkCheckSummary>;
   image_url: string | null;
   image_path: string | null;
   ai_extracted: boolean;
   ai_confidence: number | null;
   created_at: string;
   updated_at: string;
+};
+
+export type LinkCheckSummary = {
+  source: "flyer" | "google" | "user";
+  checked_at: string;
+  final_url: string;
+  host: string;
+  safe_browsing: "ok" | "unchecked" | "flagged";
+  corroborated: boolean;
 };
 
 export type RsvpLite = {

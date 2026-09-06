@@ -4,9 +4,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
+import { LINK_KINDS, resolveEventLinks, type LinkKind } from "@/lib/ai/event-links";
 import { extractEventFromImage, type ExtractedEvent } from "@/lib/ai/extract-event";
+import { describeProviders } from "@/lib/ai/providers";
 import { notifyComment, notifyRsvp } from "@/lib/email/notify";
 import { fmt, isValidTimeZone, localInputToIso } from "@/lib/format";
+import { signLinkChecks, verifyLinkChecks } from "@/lib/link-token";
+import { normalizeUrl, verifyLink, type LinkChecks } from "@/lib/links";
 import { getSiteUrl } from "@/lib/site";
 import { eventImagePublicPrefix } from "@/lib/supabase/env";
 import { createClient, requireUserId } from "@/lib/supabase/server";
@@ -14,7 +18,20 @@ import { getTimeZone } from "@/lib/timezone";
 import { EVENT_CATEGORIES, RSVP_STATUSES, type RsvpStatus } from "@/lib/types";
 
 export type AnalyzeResult =
-  | { ok: true; event: ExtractedEvent }
+  | {
+      ok: true;
+      event: ExtractedEvent;
+      links: {
+        organizer_name: string | null;
+        organizer_url: string | null;
+        event_url: string | null;
+        ticket_url: string | null;
+      };
+      linkChecks: LinkChecks;
+      linkToken: string;
+      provider: string;
+      lookup: { attempted: boolean; found: boolean; summary: string | null };
+    }
   | { ok: false; error: string };
 
 export async function analyzeFlyer(input: {
@@ -36,16 +53,33 @@ export async function analyzeFlyer(input: {
   const timeZone = await getTimeZone();
   const today = fmt(new Date(), timeZone, "yyyy-MM-dd");
 
+  let extraction;
   try {
-    const event = await extractEventFromImage({ imageUrl, caption, today, timeZone });
-    return { ok: true, event };
+    extraction = await extractEventFromImage({ imageUrl, caption, today, timeZone });
   } catch (err) {
-    console.error("analyzeFlyer failed", err);
+    console.error("analyzeFlyer failed", err, { providers: describeProviders() });
     return {
       ok: false,
       error: "Couldn't read the flyer automatically. Fill in the details below.",
     };
   }
+
+  const resolved = await resolveEventLinks(extraction.event, caption);
+
+  return {
+    ok: true,
+    event: extraction.event,
+    links: {
+      organizer_name: resolved.organizer_name,
+      organizer_url: resolved.organizer_url,
+      event_url: resolved.event_url,
+      ticket_url: resolved.ticket_url,
+    },
+    linkChecks: resolved.link_checks,
+    linkToken: signLinkChecks(resolved.link_checks),
+    provider: extraction.providerLabel,
+    lookup: resolved.lookup,
+  };
 }
 
 const optionalText = (max: number) =>
@@ -68,25 +102,15 @@ const eventFieldsSchema = z.object({
   city: optionalText(80),
   price: optionalText(80),
   ticket_url: optionalText(500),
+  organizer_name: optionalText(120),
+  organizer_url: optionalText(500),
+  event_url: optionalText(500),
   description: optionalText(2000),
   caption: optionalText(2000),
   lineup: z.string().optional().default(""),
   tags: z.string().optional().default(""),
+  link_token: z.string().optional().default(""),
 });
-
-function splitList(value: string, max: number, lowercase = false) {
-  const seen = new Set<string>();
-  const out: string[] = [];
-  for (const raw of value.split(/[,\n]/)) {
-    const item = (lowercase ? raw.toLowerCase() : raw).trim().replace(/^#/, "").slice(0, 60);
-    const key = item.toLowerCase();
-    if (!item || seen.has(key)) continue;
-    seen.add(key);
-    out.push(item);
-    if (out.length >= max) break;
-  }
-  return out;
-}
 
 const createEventSchema = eventFieldsSchema.extend({
   image_url: optionalText(1000),
@@ -109,10 +133,65 @@ function formToRecord(formData: FormData) {
   return raw;
 }
 
+function splitList(value: string, max: number, lowercase = false) {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of value.split(/[,\n]/)) {
+    const item = (lowercase ? raw.toLowerCase() : raw).trim().replace(/^#/, "").slice(0, 60);
+    const key = item.toLowerCase();
+    if (!item || seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
 type EventValues = z.infer<typeof eventFieldsSchema>;
 
+/**
+ * Every link is normalised and checked before it is stored. Links that match
+ * a signed analysis result keep their "found on Google" / "from the flyer"
+ * provenance; anything else is treated as poster-supplied and verified fresh.
+ */
+async function verifySubmittedLinks(
+  v: EventValues,
+  previous: { urls: Partial<Record<LinkKind, string | null>>; checks: LinkChecks } | null
+) {
+  const analysed = verifyLinkChecks(v.link_token) ?? {};
+  const urls: Record<LinkKind, string | null> = { organizer_url: null, event_url: null, ticket_url: null };
+  const checks: LinkChecks = {};
+
+  for (const kind of LINK_KINDS) {
+    const submitted = normalizeUrl(v[kind]);
+    if (!submitted) continue;
+
+    const fromAnalysis = analysed[kind];
+    if (fromAnalysis && fromAnalysis.final_url === submitted) {
+      urls[kind] = submitted;
+      checks[kind] = fromAnalysis;
+      continue;
+    }
+    const prior = previous?.checks[kind];
+    if (prior && previous?.urls[kind] === submitted) {
+      urls[kind] = submitted;
+      checks[kind] = prior;
+      continue;
+    }
+    const verified = await verifyLink(submitted, "user");
+    if (!verified) continue;
+    urls[kind] = verified.url;
+    checks[kind] = verified.check;
+  }
+
+  return { urls, checks };
+}
+
 /** Turns validated form values into a row payload, or returns a user-facing error. */
-function toEventRow(v: EventValues) {
+async function toEventRow(
+  v: EventValues,
+  previous: { urls: Partial<Record<LinkKind, string | null>>; checks: LinkChecks } | null
+) {
   const tz = isValidTimeZone(v.tz) ? v.tz : "UTC";
 
   let starts_at: string;
@@ -127,11 +206,9 @@ function toEventRow(v: EventValues) {
     return { error: "The end time has to be after the start." } as const;
   }
 
-  let ticket_url = v.ticket_url;
-  if (ticket_url && !/^https?:\/\//i.test(ticket_url)) ticket_url = `https://${ticket_url}`;
-
   const lineup = splitList(v.lineup, 30);
   const tags = splitList(v.tags, 12, true);
+  const links = await verifySubmittedLinks(v, previous);
 
   return {
     row: {
@@ -147,7 +224,11 @@ function toEventRow(v: EventValues) {
       lineup,
       tags,
       price: v.price,
-      ticket_url,
+      organizer_name: v.organizer_name,
+      organizer_url: links.urls.organizer_url,
+      event_url: links.urls.event_url,
+      ticket_url: links.urls.ticket_url,
+      link_checks: links.checks,
     },
   } as const;
 }
@@ -164,7 +245,7 @@ export async function createEvent(
   }
   const v = parsed.data;
 
-  const built = toEventRow(v);
+  const built = await toEventRow(v, null);
   if ("error" in built) return { error: built.error };
 
   if (v.image_url && !v.image_url.startsWith(eventImagePublicPrefix())) {
@@ -215,10 +296,24 @@ export async function updateEvent(
   }
   const v = parsed.data;
 
-  const built = toEventRow(v);
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("events")
+    .select("organizer_url, event_url, ticket_url, link_checks")
+    .match({ id: v.id, author_id: userId })
+    .maybeSingle();
+  if (!existing) return { error: "Only the person who posted this can edit it." };
+
+  const built = await toEventRow(v, {
+    urls: {
+      organizer_url: existing.organizer_url as string | null,
+      event_url: existing.event_url as string | null,
+      ticket_url: existing.ticket_url as string | null,
+    },
+    checks: (existing.link_checks as LinkChecks) ?? {},
+  });
   if ("error" in built) return { error: built.error };
 
-  const supabase = await createClient();
   const { data, error } = await supabase
     .from("events")
     .update(built.row)

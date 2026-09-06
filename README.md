@@ -21,7 +21,7 @@ event on your friends' calendars, and shows you who's in, so nobody goes alone.
 | --------- | -------------------------------------------------------------- |
 | App       | Next.js 16 (App Router, Server Actions), React 19, Tailwind 4  |
 | Data/Auth | Supabase (Postgres, Auth, Storage) via the Vercel Marketplace  |
-| AI        | Vercel AI SDK + AI Gateway, `anthropic/claude-sonnet-5` vision |
+| AI        | Vercel AI SDK; Gemini (free tier, with Google Search grounding) first, Qwen VL as backup |
 | Hosting   | Vercel (auto-deploys from GitHub)                              |
 
 ## Local development
@@ -72,6 +72,35 @@ Optional:
   "Only Preview Deployments", or attach a custom domain.
 - Until the Supabase integration has populated the env vars, the app renders a "not connected"
   notice instead of failing. Redeploy after the integration is attached.
+
+## Flyer reading and organizer lookup
+
+`src/lib/ai/providers.ts` builds a chain of vision models from whichever keys are set, and the
+flyer is read by the first one that works:
+
+1. **Google Gemini** (`GOOGLE_GENERATIVE_AI_API_KEY`, free tier from AI Studio). Also the only
+   provider that can look up the event: `find-organizer.ts` runs a second Gemini call with Google
+   Search grounding to find the real promoter, the official event page and the ticket link.
+2. **Qwen VL on OpenRouter** (`OPENROUTER_API_KEY`), cheap and hosted but flyer-only.
+3. **Qwen VL on Ollama** (`OLLAMA_BASE_URL`), free on your own machine, local dev only.
+4. **Anthropic** (`ANTHROPIC_API_KEY`) and finally **Vercel AI Gateway**.
+
+### Link safety
+
+Every organizer, event and ticket link goes through `src/lib/links.ts` before it is stored or shown:
+
+- only `http(s)` URLs, no embedded credentials, no private or local hosts;
+- redirects are followed server-side so shorteners resolve to the real destination, and links
+  that never resolve are dropped;
+- links Gemini suggests are kept only when their domain matches one of the Google Search
+  sources returned with the answer, so the model can't invent a URL;
+- links printed on the flyer are accepted once they resolve; links typed by the poster are
+  verified fresh on save;
+- with `GOOGLE_SAFE_BROWSING_API_KEY` set, every link is checked against Google Safe Browsing
+  and flagged ones are dropped;
+- the provenance of each link is signed during analysis (`link-token.ts`) so a client can't
+  claim a link was "found on Google", and each link shows its domain and provenance on the
+  event page. External links open with `rel="noopener noreferrer nofollow ugc"`.
 
 ## Email (Resend)
 

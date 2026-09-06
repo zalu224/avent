@@ -157,6 +157,9 @@ export function EventCard({
             {relativeDay(event.starts_at, tz, now)} at {timeLabel(event.starts_at, tz)}
             {where ? `, ${where}` : ""}
           </p>
+          {event.organizer_name && (
+            <p className="text-sm text-lilac">Put on by {event.organizer_name}</p>
+          )}
         </div>
 
         {event.caption && (

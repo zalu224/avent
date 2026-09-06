@@ -20,6 +20,9 @@ export function EditEventForm({ event, tz }: { event: EventRow; tz: string }) {
     tags: event.tags.join(", "),
     price: event.price ?? "",
     ticket_url: event.ticket_url ?? "",
+    organizer_name: event.organizer_name ?? "",
+    organizer_url: event.organizer_url ?? "",
+    event_url: event.event_url ?? "",
     description: event.description ?? "",
   });
   const [caption, setCaption] = useState(event.caption ?? "");
