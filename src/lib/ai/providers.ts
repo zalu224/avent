@@ -24,7 +24,14 @@ export type VisionProvider = {
   model: LanguageModel;
 };
 
-const GEMINI_DEFAULTS = ["gemini-3.5-flash", "gemini-2.5-flash"];
+// Google retires older Flash models for new keys; keep a couple of fallbacks
+// so a retired or overloaded model doesn't take flyer reading down.
+const GEMINI_DEFAULTS = [
+  "gemini-3.6-flash",
+  "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-flash-lite-latest",
+];
 const GATEWAY_DEFAULT = "anthropic/claude-sonnet-5";
 
 function unique<T>(items: (T | undefined | null)[]) {

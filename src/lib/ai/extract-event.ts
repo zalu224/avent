@@ -81,6 +81,15 @@ export class NoVisionProviderError extends Error {
   }
 }
 
+function imageMediaType(url: string) {
+  const ext = url.split("?")[0].split(".").pop()?.toLowerCase();
+  if (ext === "png") return "image/png";
+  if (ext === "webp") return "image/webp";
+  if (ext === "gif") return "image/gif";
+  if (ext === "heic" || ext === "heif") return "image/heic";
+  return "image/jpeg";
+}
+
 function buildPrompt(input: Input) {
   return [
     "You read flyers and posts for nightlife and local events (concerts, raves, club nights, festivals, parties, games, shows) and extract the details so they can go on a calendar.",
@@ -103,8 +112,17 @@ export async function extractEventFromImage(input: Input): Promise<ExtractionRes
   const providers = visionProviders();
   if (providers.length === 0) throw new NoVisionProviderError();
 
-  const content: Array<{ type: "image"; image: URL } | { type: "text"; text: string }> = [];
-  if (input.imageUrl) content.push({ type: "image", image: new URL(input.imageUrl) });
+  const content: Array<
+    { type: "file"; data: Uint8Array; mediaType: string } | { type: "text"; text: string }
+  > = [];
+  if (input.imageUrl) {
+    // Send bytes inline: Gemini rejects arbitrary external URLs as file
+    // references, and local Ollama can't fetch them at all.
+    const res = await fetch(input.imageUrl, { signal: AbortSignal.timeout(15000) });
+    if (!res.ok) throw new Error(`Could not download the flyer image (${res.status})`);
+    const mediaType = res.headers.get("content-type")?.split(";")[0] || imageMediaType(input.imageUrl);
+    content.push({ type: "file", data: new Uint8Array(await res.arrayBuffer()), mediaType });
+  }
   content.push({ type: "text", text: buildPrompt(input) });
 
   const failures: string[] = [];
