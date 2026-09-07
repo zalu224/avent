@@ -3,6 +3,8 @@
 Post a flyer for the concert, the rave, the club night. Headcount reads the flyer with AI, puts the
 event on your friends' calendars, and shows you who's in, so nobody goes alone.
 
+Live at https://headcountevents.com.
+
 - **Follow friends** and see the events they post in your feed and on a shared calendar.
 - **Post a flyer**: upload the photo, Claude extracts title, date, venue, lineup and price; you
   confirm and post. Authors can edit or delete their posts.

@@ -90,7 +90,7 @@ export async function resolveRedirects(url: string, maxHops = 5): Promise<string
         method: "HEAD",
         redirect: "manual",
         signal: AbortSignal.timeout(6000),
-        headers: { "user-agent": "HeadcountLinkCheck/1.0 (+https://avent-avent.vercel.app)" },
+        headers: { "user-agent": "HeadcountLinkCheck/1.0 (+https://headcountevents.com)" },
       });
     } catch {
       return current;
