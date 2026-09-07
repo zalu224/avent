@@ -2,8 +2,8 @@ import Link from "next/link";
 
 const STEPS = [
   {
-    title: "Post the flyer",
-    body: "Snap the poster, the screenshot, the group-chat photo. Headcount reads the date, venue and lineup and fills the event in for you.",
+    title: "Post the event",
+    body: "Add a photo of the flyer or just type what you know. Headcount reads the date, venue and lineup and fills the event in for you.",
   },
   {
     title: "It lands on your friends’ calendars",
@@ -38,7 +38,7 @@ export default function LandingPage() {
             going?
           </h1>
           <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-2 md:text-xl">
-            Post a flyer for the concert, the rave, the club night. Headcount puts it on your
+            Post the concert, the rave, the club night. Headcount puts it on your
             friends’ calendars and shows you who’s in, so nobody goes alone.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

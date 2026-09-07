@@ -178,7 +178,7 @@ export default async function DiscoverPage({
             {q ? "No matches" : "Nothing coming up here"}
           </h2>
           <p className="mx-auto mt-2 max-w-sm text-muted-2">
-            {emptyText} If you know about it, post the flyer and it shows up for everyone.
+            {emptyText} If you know about it, post it and it shows up for everyone.
           </p>
           <div className="mt-5 flex justify-center gap-3">
             {q && (
@@ -187,7 +187,7 @@ export default async function DiscoverPage({
               </Link>
             )}
             <Link href="/events/new" className="btn btn-primary">
-              Post a flyer
+              New post
             </Link>
           </div>
         </div>

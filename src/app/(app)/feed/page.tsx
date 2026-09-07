@@ -71,14 +71,14 @@ export default async function FeedPage() {
         <div className="card px-5 py-10 text-center">
           <h2 className="font-display text-lg font-bold">Your feed is empty</h2>
           <p className="mx-auto mt-2 max-w-sm text-muted-2">
-            Follow a few people to see what they’re going to, or post the first flyer yourself.
+            Follow a few people to see what they’re going to, or make the first post yourself.
           </p>
           <div className="mt-5 flex justify-center gap-3">
             <Link href="/people" className="btn btn-outline">
               Find people
             </Link>
             <Link href="/events/new" className="btn btn-primary">
-              Post a flyer
+              New post
             </Link>
           </div>
         </div>

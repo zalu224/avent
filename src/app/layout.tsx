@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s · Headcount",
   },
   description:
-    "Post a flyer, Headcount reads it and puts the event on your friends' calendars. See who's in and go together.",
+    "Post what you’re going to. Headcount fills in the details and puts it on your friends’ calendars. See who’s in and go together.",
 };
 
 export const viewport: Viewport = {

@@ -4,7 +4,7 @@ import { PageHeading } from "@/components/page-heading";
 import { getProfileById } from "@/lib/queries";
 import { createClient, requireUserId } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Post a flyer" };
+export const metadata: Metadata = { title: "New post" };
 
 export default async function NewEventPage() {
   const userId = await requireUserId();
@@ -14,8 +14,8 @@ export default async function NewEventPage() {
   return (
     <>
       <PageHeading
-        title="Post a flyer"
-        sub="Add the flyer and we’ll pull out the date, venue and lineup for you."
+        title="New post"
+        sub="Share what you’re going to. Add a photo of the flyer and we’ll fill in the date, venue and lineup, or type them yourself."
       />
       <NewPostForm userId={userId} defaultCity={profile?.city ?? null} />
     </>

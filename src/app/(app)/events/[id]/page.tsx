@@ -47,7 +47,7 @@ export async function generateMetadata({
       url: `${siteUrl}/events/${event.id}`,
       siteName: "Headcount",
       type: "website",
-      images: event.image_url ? [{ url: event.image_url, alt: `Flyer for ${event.title}` }] : [],
+      images: event.image_url ? [{ url: event.image_url, alt: `Photo for ${event.title}` }] : [],
     },
     twitter: {
       card: event.image_url ? "summary_large_image" : "summary",
@@ -113,7 +113,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
       {event.image_url && (
         <Image
           src={event.image_url}
-          alt={`Flyer for ${event.title}`}
+          alt={`Photo for ${event.title}`}
           width={1200}
           height={1500}
           priority
@@ -236,7 +236,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
               {event.author.display_name || event.author.username}
             </Link>{" "}
             {timeAgo(event.created_at, now)}
-            {event.ai_extracted && " · details read from the flyer"}
+            {event.ai_extracted && " · details filled in by AI"}
           </p>
           {event.caption && <p className="mt-1 whitespace-pre-line leading-relaxed">{event.caption}</p>}
         </div>

@@ -11,7 +11,7 @@ const LABELS = {
 function provenance(check: EventRow["link_checks"][string] | undefined) {
   if (!check) return "Added by the poster";
   if (check.source === "google") return "Matched a Google result";
-  if (check.source === "flyer") return "Printed on the flyer";
+  if (check.source === "flyer") return "From the post";
   return "Added by the poster";
 }
 

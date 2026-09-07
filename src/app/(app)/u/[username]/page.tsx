@@ -140,7 +140,7 @@ export default async function ProfilePage({
               |
             </span>
             <span className="font-semibold text-fore">{stats.posts}</span>{" "}
-            {stats.posts === 1 ? "flyer" : "flyers"} posted
+            {stats.posts === 1 ? "post" : "posts"}
           </p>
         </div>
       </header>
@@ -198,7 +198,7 @@ export default async function ProfilePage({
               <p className="px-2 py-10 text-center text-muted-2">
                 {tab === "posts"
                   ? isMe
-                    ? "You haven’t posted a flyer yet."
+                    ? "You haven’t posted yet."
                     : `${name} hasn’t posted yet.`
                   : tab === "going"
                     ? "Nothing coming up."

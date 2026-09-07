@@ -49,7 +49,7 @@ export function Nav({ profile }: { profile: ProfileLite }) {
           aria-current={isActive("/events/new") ? "page" : undefined}
           className="mt-7 flex items-center justify-center gap-2 rounded-full bg-flare px-4 py-2.5 font-semibold text-on-flare hover:bg-flare-deep"
         >
-          <Plus size={18} aria-hidden /> Post a flyer
+          <Plus size={18} aria-hidden /> New post
         </Link>
 
         <nav className="mt-6 flex flex-col gap-1" aria-label="Main">

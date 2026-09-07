@@ -115,7 +115,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
   async function readFlyer() {
     setNotice(null);
     if (!file && !caption.trim()) {
-      setNotice("Add a flyer photo or write a caption first.");
+      setNotice("Add a photo or write a caption first.");
       return;
     }
     const uploaded = await ensureUploaded();
@@ -126,7 +126,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
       const result = await analyzeFlyer({ imageUrl: uploaded?.url, caption });
       if (result.ok) {
         if (!result.event.is_event) {
-          setNotice("That doesn't look like an event flyer. You can still fill in the details.");
+          setNotice("That doesn't look like an event. You can still fill in the details.");
         }
         setFields((prev) => fieldsFromExtraction(result.event, result.links, prev));
         setAi({
@@ -157,7 +157,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Flyer + caption */}
+      {/* Photo + caption */}
       <section className="card p-4">
         <input
           ref={fileInput}
@@ -172,7 +172,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={preview}
-              alt="Selected flyer"
+              alt="Selected photo"
               className="max-h-[28rem] w-full rounded-lg object-contain"
             />
             {step === "compose" && (
@@ -193,8 +193,8 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
             className="flex w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-edge-2 px-4 py-10 text-muted-2 hover:border-muted hover:text-fore"
           >
             <ImagePlus size={28} aria-hidden />
-            <span className="font-medium">Add the flyer or a photo</span>
-            <span className="text-sm text-muted">Screenshots work too</span>
+            <span className="font-medium">Add a photo</span>
+            <span className="text-sm text-muted">Optional. Flyers and screenshots work best.</span>
           </button>
         )}
 
@@ -224,8 +224,8 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
               {busy === "upload"
                 ? "Uploading…"
                 : busy === "analyze"
-                  ? "Reading the flyer and checking links…"
-                  : "Read the flyer"}
+                  ? "Filling in the details and checking links…"
+                  : "Fill in with AI"}
             </button>
             <button
               type="button"
@@ -253,7 +253,7 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
               <h2 className="font-display text-lg font-bold">Check the details</h2>
               <p className="mt-1 text-sm text-muted">
                 {ai.used
-                  ? `Filled in from the flyer${
+                  ? `Filled in by AI${
                       ai.confidence !== null ? ` (${Math.round(ai.confidence * 100)}% sure)` : ""
                     }. Fix anything that's off.`
                   : "Fill in what you know. Only the title and start time are required."}
@@ -263,9 +263,9 @@ export function NewPostForm({ userId, defaultCity }: { userId: string; defaultCi
                   <ShieldCheck size={14} aria-hidden className={ai.lookup.found ? "text-glow-ink" : ""} />
                   {ai.lookup.attempted
                     ? ai.lookup.found
-                      ? `Found the organizer on Google. ${verifiedCount} ${verifiedCount === 1 ? "link" : "links"} checked.`
-                      : "Couldn't find this event on Google yet, so only links printed on the flyer were kept."
-                    : "Organizer lookup is off (no Google key), so only links printed on the flyer were kept."}
+                      ? `Found the organizer online. ${verifiedCount} ${verifiedCount === 1 ? "link" : "links"} checked.`
+                      : "Couldn't find this event online yet, so only links from your post were kept."
+                    : "Organizer lookup is off, so only links from your post were kept."}
                 </p>
               )}
             </div>

@@ -44,10 +44,10 @@ export async function analyzeFlyer(input: {
   const caption = input.caption?.trim() || undefined;
 
   if (imageUrl && !imageUrl.startsWith(eventImagePublicPrefix())) {
-    return { ok: false, error: "Upload the flyer through Headcount first." };
+    return { ok: false, error: "Upload the photo through Headcount first." };
   }
   if (!imageUrl && !caption) {
-    return { ok: false, error: "Add a flyer photo or write a caption first." };
+    return { ok: false, error: "Add a photo or write a caption first." };
   }
 
   const timeZone = await getTimeZone();
@@ -60,7 +60,7 @@ export async function analyzeFlyer(input: {
     console.error("analyzeFlyer failed", err, { providers: describeProviders() });
     return {
       ok: false,
-      error: "Couldn't read the flyer automatically. Fill in the details below.",
+      error: "Couldn't fill in the details automatically. Add them below.",
     };
   }
 
@@ -250,7 +250,7 @@ export async function createEvent(
   if ("error" in built) return { error: built.error };
 
   if (v.image_url && !v.image_url.startsWith(eventImagePublicPrefix())) {
-    return { error: "Upload the flyer through Headcount first." };
+    return { error: "Upload the photo through Headcount first." };
   }
 
   const confidence = Number.parseFloat(v.ai_confidence);

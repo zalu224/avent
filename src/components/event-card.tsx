@@ -55,7 +55,7 @@ function WhoIsIn({ going, past }: { going: RsvpLite[]; past: boolean }) {
   );
 }
 
-/** Instagram-style feed post: header, full-width flyer, actions, headcount, caption. */
+/** Instagram-style feed post: header, full-width photo, actions, headcount, caption. */
 export function EventCard({
   event,
   tz,
@@ -95,7 +95,7 @@ export function EventCard({
         {event.image_url ? (
           <Image
             src={event.image_url}
-            alt={`Flyer for ${event.title}`}
+            alt={`Photo for ${event.title}`}
             width={1080}
             height={1350}
             sizes="(max-width: 768px) 100vw, 672px"

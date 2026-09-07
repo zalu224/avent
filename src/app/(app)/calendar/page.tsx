@@ -180,7 +180,7 @@ export default async function CalendarPage({
           <div className="px-2 py-8 text-center text-muted-2">
             <p>Nothing on the calendar for {format(monthStart, "MMMM")} yet.</p>
             <Link href="/events/new" className="btn btn-primary mt-4">
-              Post a flyer
+              New post
             </Link>
           </div>
         ) : (

@@ -4,7 +4,15 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { signIn, signUp, type AuthState } from "@/lib/actions/auth";
 
-export function LoginForm({ next, linkError }: { next?: string; linkError?: boolean }) {
+export function LoginForm({
+  next,
+  linkError,
+  oauthError,
+}: {
+  next?: string;
+  linkError?: boolean;
+  oauthError?: boolean;
+}) {
   const [state, formAction, pending] = useActionState<AuthState, FormData>(signIn, {});
 
   return (
@@ -14,6 +22,12 @@ export function LoginForm({ next, linkError }: { next?: string; linkError?: bool
       {linkError && (
         <p role="alert" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-2 text-sm text-glow-ink">
           That sign-in link has expired or was already used. Sign in with your password instead.
+        </p>
+      )}
+
+      {oauthError && (
+        <p role="alert" className="rounded-lg border border-glow/50 bg-glow/10 px-3 py-2 text-sm text-glow-ink">
+          Google sign-in didn’t finish. Try again, or use your email and password.
         </p>
       )}
 

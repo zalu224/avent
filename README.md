@@ -6,7 +6,7 @@ event on your friends' calendars, and shows you who's in, so nobody goes alone.
 Live at https://headcountevents.com.
 
 - **Follow friends** and see the events they post in your feed and on a shared calendar.
-- **Post a flyer**: upload the photo, Claude extracts title, date, venue, lineup and price; you
+- **Post**: add a photo of the flyer or just a caption; the AI extracts title, date, venue, lineup and price; you
   confirm and post. Authors can edit or delete their posts.
 - **I'm in / Maybe**: RSVP, see the headcount, and plan in the thread on each event.
 - **Search**: find any event by artist, venue, party name, genre or tag, filter by city and type,
@@ -150,6 +150,13 @@ Two kinds of email, both branded Headcount:
   testing.
 - Add your production and preview URLs to Authentication → URL Configuration → Redirect URLs
   (`https://<your-app>.vercel.app/auth/callback`).
+- Google sign-in: in Google Cloud → Google Auth Platform → Clients, create a "Web application"
+  client with the redirect URI `https://<project-ref>.supabase.co/auth/v1/callback`, then enable
+  Google under Authentication → Sign In / Providers in Supabase with that client ID and secret.
+  Turn on "Allow manual linking" on the same page so people can connect or disconnect Google
+  from Settings. A Google sign-in whose email matches an existing account links to it
+  automatically; brand-new Google users get a profile from their Google name and photo
+  (migration `20260908000000_google_sign_in.sql`).
 
 ## Project layout
 
