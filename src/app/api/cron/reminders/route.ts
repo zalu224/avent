@@ -106,7 +106,7 @@ export async function GET(request: NextRequest) {
       } else {
         failures.push(`${key}: ${result.error ?? "skipped"}`);
       }
-      if (sent >= 150) break; // stay well inside the free email quota per run
+      if (sent >= 80) break; // Resend's free plan allows 100 emails/day; leave room for notifications
     }
   }
 

@@ -129,6 +129,67 @@ async function viaGoogleGrounding(input: LookupInput): Promise<OrganizerLookup |
 
 /* ---------- Strategy 2: web search API + any text model ---------- */
 
+const TEXT_MODEL_TIMEOUT_MS = 25_000;
+const TEXT_TOTAL_BUDGET_MS = 60_000;
+
+const EVENT_HOST_RE =
+  /(^|\.)(ra\.co|dice\.fm|eventbrite\.[a-z.]+|partiful\.com|ticketmaster\.[a-z.]+|posh\.vip|shotgun\.live|tixr\.com|seetickets\.[a-z.]+|axs\.com|etix\.com|ticketweb\.com|humanitix\.com|lu\.ma|meetup\.com|skiddle\.com|showclix\.com|ticketfairy\.com|universe\.com|bandsintown\.com|songkick\.com|eventix\.io|ticketspice\.com|eventbee\.com)$/i;
+const STOP_WORDS = new Set([
+  "the", "and", "for", "with", "from", "that", "this", "presents", "event", "events", "party", "night", "live", "tickets",
+]);
+
+function tokens(text: string | null | undefined) {
+  const words = (text ?? "").toLowerCase().match(/[a-z0-9]{3,}/g) ?? [];
+  return new Set(words.filter((w) => !STOP_WORDS.has(w)));
+}
+
+function overlap(needle: Set<string>, hay: string) {
+  if (needle.size === 0) return 0;
+  const lower = hay.toLowerCase();
+  let hits = 0;
+  for (const t of needle) if (lower.includes(t)) hits++;
+  return hits / needle.size;
+}
+
+/**
+ * Picks the event page without a model: a known event or ticketing site whose
+ * title and snippet repeat most of the event's title. Used when every model is
+ * busy, so the search credits already spent still produce a verified link.
+ */
+function heuristicPick(input: LookupInput, results: SearchResult[]): z.infer<typeof foundSchema> {
+  const title = tokens(input.title);
+  let best: { result: SearchResult; score: number } | null = null;
+  for (const result of results) {
+    if (!EVENT_HOST_RE.test(hostOf(result.url))) continue;
+    const text = `${result.title} ${result.snippet}`;
+    let score = overlap(title, text);
+    if (input.venue && overlap(tokens(input.venue), text) >= 0.5) score += 0.15;
+    if (input.lineup.some((artist) => overlap(tokens(artist), text) === 1)) score += 0.1;
+    if (!best || score > best.score) best = { result, score };
+  }
+  const eventUrl = best && best.score >= 0.75 ? best.result.url : null;
+
+  // The organizer's own Instagram, only when the flyer named the organizer.
+  let organizerUrl: string | null = null;
+  const organizer = tokens(input.organizerHint);
+  if (organizer.size > 0) {
+    const ig = results.find(
+      (r) => /(^|\.)instagram\.com$/i.test(hostOf(r.url)) && overlap(organizer, `${r.title} ${r.url} ${r.snippet}`) === 1
+    );
+    organizerUrl = ig?.url ?? null;
+  }
+
+  return {
+    found: Boolean(eventUrl || organizerUrl),
+    organizer_name: input.organizerHint,
+    organizer_url: organizerUrl,
+    event_url: eventUrl,
+    ticket_url: eventUrl,
+    summary: null,
+    confidence: eventUrl && best ? Math.min(0.6, best.score * 0.6) : 0.3,
+  };
+}
+
 function queriesFor(input: LookupInput) {
   const year = input.date?.slice(0, 4);
   const q: string[] = [];
@@ -167,7 +228,17 @@ async function viaWebSearch(input: LookupInput): Promise<OrganizerLookup | null>
     RULES,
   ].join("\n\n");
 
+  const sources = results.map((r) => ({ url: r.url, title: r.title || null, host: hostOf(r.url) }));
+  const base = {
+    sources,
+    groundingHosts: [...new Set(sources.map((s) => s.host))],
+    method: "web-search" as const,
+  };
+
+  const deadline = Date.now() + TEXT_TOTAL_BUDGET_MS;
   for (const provider of models) {
+    const remaining = deadline - Date.now();
+    if (remaining < 3_000) break;
     try {
       const { output } = await generateText({
         model: provider.model,
@@ -175,23 +246,21 @@ async function viaWebSearch(input: LookupInput): Promise<OrganizerLookup | null>
         prompt,
         providerOptions: provider.providerOptions,
         maxOutputTokens: 2048,
-        maxRetries: 1,
-        abortSignal: AbortSignal.timeout(40_000),
+        maxRetries: 0,
+        abortSignal: AbortSignal.timeout(Math.min(TEXT_MODEL_TIMEOUT_MS, remaining)),
       });
       if (!output) throw new Error("no structured output");
-      const sources = results.map((r) => ({ url: r.url, title: r.title || null, host: hostOf(r.url) }));
-      return {
-        ...output,
-        sources,
-        groundingHosts: [...new Set(sources.map((s) => s.host))],
-        method: "web-search",
-        model: provider.label,
-      };
+      return { ...output, ...base, model: provider.label };
     } catch (err) {
       console.warn(`[organizer] ${provider.label} failed reading search results`, err instanceof Error ? err.message.slice(0, 200) : err);
     }
   }
-  return null;
+
+  // Every model was busy or timed out. The search already cost credits, so
+  // salvage what the results say on their own.
+  const guess = heuristicPick(input, results);
+  console.warn(`[organizer] no model answered; matched search results directly (${guess.found ? "found" : "no match"})`);
+  return { ...guess, ...base, model: "search results only" };
 }
 
 export async function findOrganizer(input: LookupInput): Promise<OrganizerLookup | null> {

@@ -28,8 +28,6 @@ export type VisionProvider = {
 
 // Google retires older Flash models for new keys; keep a couple of fallbacks
 // so a retired or overloaded model doesn't take flyer reading down.
-// 3.5 Flash goes first: it accepts thinkingBudget=0, which keeps structured
-// output fast and untruncated. 3.6 rejects that option, so it runs as-is.
 const GEMINI_DEFAULTS = [
   "gemini-3.5-flash",
   "gemini-3.6-flash",
@@ -37,11 +35,17 @@ const GEMINI_DEFAULTS = [
   "gemini-flash-lite-latest",
 ];
 
-/** Models known to accept thinkingBudget: 0 (2.x and 3.5 Flash families). */
+/**
+ * Gemini "thinking" settings. Reasoning adds seconds and eats into the output
+ * budget, and none of these tasks need it. 2.x and 3.5 Flash accept
+ * thinkingBudget=0; the Lite and 3.6 models reject that and take a
+ * thinkingLevel instead ("low" answers in about a second on the free tier).
+ */
 function geminiOptions(id: string): VisionProvider["providerOptions"] {
-  return /^gemini-(2\.|3\.5-|flash-lite-latest|flash-latest)/.test(id)
-    ? { google: { thinkingConfig: { thinkingBudget: 0 } } }
-    : undefined;
+  if (/^gemini-(2\.\d+-|3\.5-flash$)/.test(id)) {
+    return { google: { thinkingConfig: { thinkingBudget: 0 } } };
+  }
+  return { google: { thinkingConfig: { thinkingLevel: "low" } } };
 }
 const GATEWAY_DEFAULT = "anthropic/claude-sonnet-5";
 
@@ -101,11 +105,15 @@ export function visionProviders(): VisionProvider[] {
 }
 
 /**
- * Text-only tasks (reading search results, picking links) can use the same
- * chain; every vision model here handles plain text too.
+ * Text-only tasks (reading search results, picking links) use the same chain,
+ * but with the Gemini Lite models first: a dozen search snippets are easy
+ * reading, and Lite answers in about a second on the free tier while the
+ * full Flash models often queue behind demand.
  */
 export function textProviders(): VisionProvider[] {
-  return visionProviders();
+  const all = visionProviders();
+  const lite = all.filter((p) => p.name === "google" && /lite/.test(p.label));
+  return [...lite, ...all.filter((p) => !lite.includes(p))];
 }
 
 export function describeProviders() {

@@ -7,6 +7,8 @@
  *   BRAVE_SEARCH_API_KEY  https://brave.com/search/api
  */
 
+import { reserveCredits } from "@/lib/usage";
+
 export type SearchResult = { title: string; url: string; snippet: string };
 export type SearchResponse = { provider: "tavily" | "brave"; results: SearchResult[] };
 
@@ -53,10 +55,19 @@ async function brave(query: string, max: number): Promise<SearchResult[]> {
     .map((r) => ({ title: r.title ?? "", url: r.url!, snippet: (r.description ?? "").slice(0, 400) }));
 }
 
-/** Runs one query against the configured provider. Returns null when none is set. */
+/**
+ * Runs one query against the configured provider. Returns null when none is
+ * set or the provider's monthly credit cap has been reached (a basic Tavily
+ * search costs 1 credit).
+ */
 export async function webSearch(query: string, max = 8): Promise<SearchResponse | null> {
   const provider = searchProviderName();
   if (!provider) return null;
+
+  if (provider === "tavily" && !(await reserveCredits("tavily", 1))) {
+    return null;
+  }
+
   try {
     const results = provider === "tavily" ? await tavily(query, max) : await brave(query, max);
     return { provider, results };

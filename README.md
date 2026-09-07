@@ -100,6 +100,14 @@ whichever text model is configured. That is how a flyer-only model like Qwen sti
 the event: it reads the search results. Any link the model proposes must match a host the search
 actually returned.
 
+Search credits are metered. Every Tavily query first reserves a credit through the
+`consume_api_credits` function (table `api_usage`, one row per provider and month), and the app
+stops searching for the rest of the month once `TAVILY_MONTHLY_CREDIT_LIMIT` (default 1,400, under
+the 1,500-credit plan) is reached. Flyer reading keeps working without the lookup. If every model
+is busy when the results come back, the app still picks the event page directly from the results
+when a known event site clearly matches the title. `npx tsx scripts/check-usage.ts` shows this
+month's count.
+
 ### Link safety
 
 Every organizer, event and ticket link goes through `src/lib/links.ts` before it is stored or shown:
