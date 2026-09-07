@@ -206,6 +206,8 @@ async function viaWebSearch(input: LookupInput): Promise<OrganizerLookup | null>
 
   const seen = new Map<string, SearchResult>();
   for (const query of queriesFor(input)) {
+    // The second query is a backup; skip it (and its credit) when the first found plenty.
+    if (seen.size >= 5) break;
     const res = await webSearch(query, 8);
     for (const r of res?.results ?? []) {
       const url = normalizeUrl(r.url);

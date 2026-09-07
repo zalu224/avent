@@ -236,7 +236,6 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
               {event.author.display_name || event.author.username}
             </Link>{" "}
             {timeAgo(event.created_at, now)}
-            {event.ai_extracted && " · details filled in by AI"}
           </p>
           {event.caption && <p className="mt-1 whitespace-pre-line leading-relaxed">{event.caption}</p>}
         </div>

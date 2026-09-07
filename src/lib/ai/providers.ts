@@ -1,5 +1,6 @@
 import { createAnthropic } from "@ai-sdk/anthropic";
 import { createGoogle } from "@ai-sdk/google";
+import { createGroq } from "@ai-sdk/groq";
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { createOllama } from "ollama-ai-provider-v2";
 import type { JSONValue, LanguageModel } from "ai";
@@ -10,13 +11,17 @@ import type { JSONValue, LanguageModel } from "ai";
  * through to the next.
  *
  *   1. Google Gemini      GOOGLE_GENERATIVE_AI_API_KEY  (free tier; also powers Google Search grounding)
- *   2. Qwen VL, OpenRouter OPENROUTER_API_KEY           (cheap hosted Qwen; no web search)
- *   3. Qwen VL, Ollama     OLLAMA_BASE_URL               (free, local; dev machines only)
- *   4. Claude              ANTHROPIC_API_KEY
- *   5. Vercel AI Gateway   AI_GATEWAY_API_KEY / OIDC     (needs billing on the Vercel team)
+ *   2. Llama 4 on Groq     GROQ_API_KEY                  (free tier, no card; fast vision)
+ *   3. Qwen VL, OpenRouter OPENROUTER_API_KEY           (cheap hosted Qwen; no web search)
+ *   4. Qwen VL, Ollama     OLLAMA_BASE_URL               (free, local; dev machines only)
+ *   5. Claude              ANTHROPIC_API_KEY
+ *   6. Vercel AI Gateway   AI_GATEWAY_API_KEY / OIDC     (needs billing on the Vercel team)
+ *
+ * Set AI_PREFER_LOCAL=1 to put the Ollama model first (free, offline, no
+ * quotas) while developing; the hosted models stay as fallbacks.
  */
 
-export type ProviderName = "google" | "openrouter" | "ollama" | "anthropic" | "gateway";
+export type ProviderName = "google" | "groq" | "openrouter" | "ollama" | "anthropic" | "gateway";
 
 export type VisionProvider = {
   name: ProviderName;
@@ -78,6 +83,12 @@ export function visionProviders(): VisionProvider[] {
     }
   }
 
+  if (process.env.GROQ_API_KEY) {
+    const groq = createGroq({ apiKey: process.env.GROQ_API_KEY });
+    const id = process.env.GROQ_VISION_MODEL ?? "meta-llama/llama-4-scout-17b-16e-instruct";
+    list.push({ name: "groq", label: `Groq (${id})`, model: groq(id) });
+  }
+
   if (process.env.OPENROUTER_API_KEY) {
     const openrouter = createOpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
     const id = process.env.OPENROUTER_VISION_MODEL ?? "qwen/qwen3-vl-8b-instruct";
@@ -101,6 +112,10 @@ export function visionProviders(): VisionProvider[] {
     list.push({ name: "gateway", label: `AI Gateway (${id})`, model: id });
   }
 
+  if (process.env.AI_PREFER_LOCAL === "1" || process.env.AI_PREFER_LOCAL === "true") {
+    const local = list.filter((p) => p.name === "ollama");
+    return [...local, ...list.filter((p) => p.name !== "ollama")];
+  }
   return list;
 }
 

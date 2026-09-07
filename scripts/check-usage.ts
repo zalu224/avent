@@ -3,7 +3,7 @@
  * cap refuses reservations that would exceed it. Nothing here calls Tavily.
  *
  *   npx tsx scripts/check-usage.ts            # show usage
- *   npx tsx scripts/check-usage.ts overcap    # try to reserve more than the cap (must be refused)
+ *   npx tsx scripts/check-usage.ts overcap    # try to reserve more than the Tavily cap (must be refused)
  */
 import { readFileSync } from "node:fs";
 
@@ -17,14 +17,19 @@ try {
 }
 
 async function main() {
-  const { monthlyUsage, reserveCredits, creditLimit } = await import("../src/lib/usage");
-  const provider = "tavily";
-  console.log(`${provider} limit this month:`, creditLimit(provider));
-  console.log("used:", await monthlyUsage(provider));
+  const { usageFor, reserveCredits, creditLimit } = await import("../src/lib/usage");
+  const metered = [
+    { provider: "tavily", period: "month" as const },
+    { provider: "google_cse", period: "day" as const },
+  ];
+  for (const { provider, period } of metered) {
+    console.log(`${provider} (per ${period}):`, await usageFor(provider, period));
+  }
   if (process.argv[2] === "overcap") {
-    const ok = await reserveCredits(provider, creditLimit(provider) + 1);
+    const { provider, period } = metered[0];
+    const ok = await reserveCredits(provider, creditLimit(provider) + 1, period);
     console.log("over-cap reservation allowed?", ok, ok ? "(BUG)" : "(correctly refused)");
-    console.log("used after:", await monthlyUsage(provider));
+    console.log("used after:", await usageFor(provider, period));
   }
 }
 

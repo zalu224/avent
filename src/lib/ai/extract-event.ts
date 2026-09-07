@@ -58,6 +58,47 @@ export const extractedEventSchema = z.object({
 
 export type ExtractedEvent = z.infer<typeof extractedEventSchema>;
 
+/**
+ * Small local models (Ollama) rarely satisfy a strict JSON schema on the first
+ * try, so their answer is parsed leniently: every field falls back to
+ * null / [] instead of failing the whole read.
+ */
+const lenientEventSchema = z.object({
+  is_event: z.boolean().catch(true),
+  title: z.string().nullable().catch(null),
+  category: z.enum(EVENT_CATEGORIES).nullable().catch(null),
+  date: z.string().nullable().catch(null),
+  start_time: z.string().nullable().catch(null),
+  end_time: z.string().nullable().catch(null),
+  venue_name: z.string().nullable().catch(null),
+  address: z.string().nullable().catch(null),
+  city: z.string().nullable().catch(null),
+  organizer_name: z.string().nullable().catch(null),
+  organizer_url: z.string().nullable().catch(null),
+  event_url: z.string().nullable().catch(null),
+  ticket_url: z.string().nullable().catch(null),
+  printed_urls: z.array(z.string()).catch([]),
+  lineup: z.array(z.string()).catch([]),
+  tags: z.array(z.string()).catch([]),
+  price: z.string().nullable().catch(null),
+  description: z.string().nullable().catch(null),
+  confidence: z.number().min(0).max(1).catch(0.5),
+});
+
+const JSON_SHAPE =
+  'Respond with ONLY a JSON object (no prose, no markdown) with exactly these keys: is_event (boolean), title, category (one of ' +
+  EVENT_CATEGORIES.map((c) => `"${c}"`).join(", ") +
+  " or null), date (\"YYYY-MM-DD\" or null), start_time (\"HH:MM\" or null), end_time, venue_name, address, city, organizer_name, organizer_url, event_url, ticket_url, printed_urls (array of strings), lineup (array of strings), tags (array of strings), price, description, confidence (number 0-1). Use null for anything not visible.";
+
+function extractJson(text: string): unknown {
+  const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fenced ? fenced[1] : text;
+  const start = candidate.indexOf("{");
+  const end = candidate.lastIndexOf("}");
+  if (start === -1 || end === -1) throw new Error("no JSON object in response");
+  return JSON.parse(candidate.slice(start, end + 1));
+}
+
 type Input = {
   imageUrl?: string;
   caption?: string;
@@ -113,7 +154,7 @@ export async function extractEventFromImage(input: Input): Promise<ExtractionRes
   if (providers.length === 0) throw new NoVisionProviderError();
 
   const content: Array<
-    { type: "file"; data: Uint8Array; mediaType: string } | { type: "text"; text: string }
+    { type: "file"; data: string; mediaType: string } | { type: "text"; text: string }
   > = [];
   if (input.imageUrl) {
     // Send bytes inline: Gemini rejects arbitrary external URLs as file
@@ -121,13 +162,26 @@ export async function extractEventFromImage(input: Input): Promise<ExtractionRes
     const res = await fetch(input.imageUrl, { signal: AbortSignal.timeout(15000) });
     if (!res.ok) throw new Error(`Could not download the flyer image (${res.status})`);
     const mediaType = res.headers.get("content-type")?.split(";")[0] || imageMediaType(input.imageUrl);
-    content.push({ type: "file", data: new Uint8Array(await res.arrayBuffer()), mediaType });
+    // Base64 rather than raw bytes: every provider accepts it, and the Ollama one only accepts it.
+    content.push({ type: "file", data: Buffer.from(await res.arrayBuffer()).toString("base64"), mediaType });
   }
   content.push({ type: "text", text: buildPrompt(input) });
 
   const failures: string[] = [];
   for (const provider of providers) {
     try {
+      if (provider.name === "ollama") {
+        const { text } = await generateText({
+          model: provider.model,
+          messages: [{ role: "user", content: [...content, { type: "text", text: JSON_SHAPE }] }],
+          maxOutputTokens: 2048,
+          maxRetries: 0,
+          abortSignal: AbortSignal.timeout(240_000),
+        });
+        const event = lenientEventSchema.parse(extractJson(text));
+        return { event, provider: provider.name, providerLabel: provider.label };
+      }
+
       const { output } = await generateText({
         model: provider.model,
         output: Output.object({ schema: extractedEventSchema }),
