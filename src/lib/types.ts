@@ -35,6 +35,8 @@ export type Profile = {
   display_name: string;
   first_name?: string | null;
   last_name?: string | null;
+  email_notifications?: boolean;
+  reminder_emails?: boolean;
   avatar_url: string | null;
   bio: string | null;
   city: string | null;
@@ -67,6 +69,7 @@ export type EventRow = {
   organizer_url: string | null;
   event_url: string | null;
   link_checks: Record<string, LinkCheckSummary>;
+  timezone: string;
   image_url: string | null;
   image_path: string | null;
   ai_extracted: boolean;

@@ -19,15 +19,15 @@ import type { ReactNode } from "react";
  * lilac/lilac2=secondary text, cream=primary text.
  */
 export const brand = {
-  ink: "#fbfaff",
-  plum: "#ffffff",
-  plum2: "#ebe7f6",
-  plum3: "#d6cfe9",
-  lilac: "#6f6790",
-  lilac2: "#4a4368",
-  cream: "#17132b",
-  flare: "#ff3d7f",
-  glow: "#ffc857",
+  ink: "#0b1020",
+  plum: "#121a2f",
+  plum2: "#1f2a47",
+  plum3: "#2d3d66",
+  lilac: "#8b9bc7",
+  lilac2: "#b8c5e6",
+  cream: "#eef2ff",
+  flare: "#3d7cff",
+  glow: "#8ec5ff",
 } as const;
 
 export const displayFont =
@@ -59,7 +59,6 @@ export const styles = {
     border: `1px solid ${brand.plum2}`,
     borderRadius: "16px",
     padding: "28px 28px 24px",
-    boxShadow: "0 8px 24px -12px rgba(23,19,43,0.12)",
   },
   heading: {
     fontFamily: displayFont,

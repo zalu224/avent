@@ -143,6 +143,34 @@ export function ProfileForm({ profile }: { profile: Profile }) {
         />
       </div>
 
+      <fieldset className="rounded-xl border border-edge-2 p-3">
+        <legend className="px-1 text-sm font-medium text-muted-2">Email me when</legend>
+        <label className="flex items-start gap-3 py-1.5">
+          <input
+            type="checkbox"
+            name="email_notifications"
+            defaultChecked={profile.email_notifications ?? true}
+            className="mt-1 h-4 w-4 accent-flare"
+          />
+          <span>
+            <span className="block font-medium">Someone follows me or joins my plan</span>
+            <span className="block text-sm text-muted">New followers, “I’m in” on my events, replies on my threads.</span>
+          </span>
+        </label>
+        <label className="flex items-start gap-3 py-1.5">
+          <input
+            type="checkbox"
+            name="reminder_emails"
+            defaultChecked={profile.reminder_emails ?? true}
+            className="mt-1 h-4 w-4 accent-flare"
+          />
+          <span>
+            <span className="block font-medium">An event I’m going to is tomorrow</span>
+            <span className="block text-sm text-muted">One reminder the day before, with the headcount.</span>
+          </span>
+        </label>
+      </fieldset>
+
       <div className="flex items-center justify-between gap-3 pt-2">
         <p className={`text-sm ${state.error ? "text-flare" : "text-glow-ink"}`} role="status">
           {state.error ?? state.message}

@@ -14,6 +14,11 @@ event on your friends' calendars, and shows you who's in, so nobody goes alone.
 - **Activity**: new followers, RSVPs on your posts, and replies on plans you're part of.
 - **Add to calendar**: Google Calendar link or an `.ics` download on every event, plus share links.
 - **Been to**: past events you marked as going become your going-out history.
+- **Share links**: `/events/<id>` works signed out (it shows a public view at `/e/<id>` with a
+  sign-up prompt), with Open Graph previews from the flyer.
+- **Reminders**: a daily cron (`/api/cron/reminders`, 16:00 UTC) emails everyone who's going to an
+  event in the next 26 hours, once per event, in the event's timezone. Turn off in Settings.
+- **Notification preferences** in Settings; every email honours them.
 
 ## Stack
 
@@ -45,8 +50,10 @@ supabase db push --db-url "$POSTGRES_URL_NON_POOLING"
 
 Migrations, in order: `20260906000000_init` (tables, RLS, storage bucket + policies),
 `20260906010000_event_search` (tags + ranked search), `20260906020000_profile_names` (first/last
-name). If you apply them by pasting into the SQL editor, run the whole file each time; the storage
-section at the end of the first one is easy to miss.
+name), `20260906030000_event_links` (organizer + verified links), and
+`20260906040000_notifications_and_public` (notification preferences, reminders, event timezones,
+public event pages). If you apply them by pasting into the SQL editor, run the whole file each
+time; the storage section at the end of the first one is easy to miss.
 
 Everything is behind row-level security. Signed-in users can read profiles, events, RSVPs and
 comments; they can only write rows they own. Flyers go in the public `event-images` storage bucket,

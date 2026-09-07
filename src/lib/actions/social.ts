@@ -54,6 +54,8 @@ export async function updateProfile(
   const city = String(formData.get("city") ?? "").trim().slice(0, 80);
   const bio = String(formData.get("bio") ?? "").trim().slice(0, 300);
   const avatar_url = String(formData.get("avatar_url") ?? "").trim();
+  const email_notifications = formData.get("email_notifications") === "on";
+  const reminder_emails = formData.get("reminder_emails") === "on";
 
   if (!USERNAME_RE.test(username)) {
     return { error: "Usernames are 3–24 characters: lowercase letters, numbers and underscores." };
@@ -72,10 +74,10 @@ export async function updateProfile(
 
   let { error } = await supabase
     .from("profiles")
-    .update({ ...base, first_name, last_name })
+    .update({ ...base, first_name, last_name, email_notifications, reminder_emails })
     .eq("id", userId);
 
-  // Older databases without the name columns still get the combined name.
+  // Older databases without the newer columns still get the core fields.
   if (error?.code === "42703") {
     ({ error } = await supabase.from("profiles").update(base).eq("id", userId));
   }

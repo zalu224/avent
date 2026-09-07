@@ -229,6 +229,7 @@ async function toEventRow(
       event_url: links.urls.event_url,
       ticket_url: links.urls.ticket_url,
       link_checks: links.checks,
+      timezone: tz,
     },
   } as const;
 }

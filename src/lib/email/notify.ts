@@ -2,14 +2,14 @@ import { createElement } from "react";
 import { CommentEmail, NewFollowerEmail, RsvpEmail } from "./notification-emails";
 import { isEmailConfigured, sendEmail } from "./resend";
 import { fmt, relativeDay, timeLabel } from "@/lib/format";
-import { getUserEmail, isAdminConfigured } from "@/lib/supabase/admin";
+import { createAdminClient, getUserEmail, isAdminConfigured } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { getTimeZone } from "@/lib/timezone";
 
 /**
  * Notification emails. Each function is safe to call from `after()` in a
  * server action: it never throws, and it quietly does nothing when Resend or
- * the admin key is not configured.
+ * the admin key is not configured, or when the recipient opted out.
  */
 
 function canNotify() {
@@ -29,6 +29,19 @@ async function loadActor(userId: string): Promise<Person | null> {
   return { name: (data.display_name as string) || (data.username as string), username: data.username as string };
 }
 
+/** Recipient email, or null when they opted out of activity emails. */
+export async function recipientFor(
+  userId: string,
+  pref: "email_notifications" | "reminder_emails"
+): Promise<string | null> {
+  const admin = createAdminClient();
+  if (!admin) return null;
+  const { data } = await admin.from("profiles").select(pref).eq("id", userId).maybeSingle();
+  const prefs = (data ?? null) as Record<string, unknown> | null;
+  if (prefs && prefs[pref] === false) return null;
+  return getUserEmail(userId);
+}
+
 async function loadEvent(eventId: string) {
   const supabase = await createClient();
   const tz = await getTimeZone();
@@ -44,7 +57,6 @@ async function loadEvent(eventId: string) {
     title: data.title as string,
     authorId: data.author_id as string,
     goingCount: rsvps.filter((r) => r.status === "going" || r.status === "went").length,
-    goingIds: rsvps.filter((r) => r.status !== "interested").map((r) => r.user_id),
     info: {
       id: data.id as string,
       title: data.title as string,
@@ -63,7 +75,7 @@ export async function notifyRsvp(eventId: string, actorId: string, siteUrl: stri
     if (!canNotify()) return;
     const [event, actor] = await Promise.all([loadEvent(eventId), loadActor(actorId)]);
     if (!event || !actor || event.authorId === actorId) return;
-    const to = await getUserEmail(event.authorId);
+    const to = await recipientFor(event.authorId, "email_notifications");
     if (!to) return;
     await sendEmail({
       to,
@@ -79,7 +91,7 @@ export async function notifyRsvp(eventId: string, actorId: string, siteUrl: stri
 export async function notifyFollow(targetId: string, actorId: string, siteUrl: string) {
   try {
     if (!canNotify() || targetId === actorId) return;
-    const [actor, to] = await Promise.all([loadActor(actorId), getUserEmail(targetId)]);
+    const [actor, to] = await Promise.all([loadActor(actorId), recipientFor(targetId, "email_notifications")]);
     if (!actor || !to) return;
     await sendEmail({
       to,
@@ -97,7 +109,7 @@ export async function notifyComment(eventId: string, actorId: string, body: stri
     if (!canNotify()) return;
     const [event, actor] = await Promise.all([loadEvent(eventId), loadActor(actorId)]);
     if (!event || !actor || event.authorId === actorId) return;
-    const to = await getUserEmail(event.authorId);
+    const to = await recipientFor(event.authorId, "email_notifications");
     if (!to) return;
     await sendEmail({
       to,

@@ -1,5 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { DM_Sans, Unbounded } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { TimezoneSync } from "@/components/timezone-sync";
 import "./globals.css";
 
@@ -27,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#13101f",
+  themeColor: "#0b1020",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -36,6 +38,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="flex min-h-full flex-col">
         {children}
         <TimezoneSync />
+        <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

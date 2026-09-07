@@ -48,6 +48,43 @@ export function RsvpEmail({
   );
 }
 
+export function ReminderEmail({
+  event,
+  goingCount,
+  firstName,
+  siteUrl,
+}: {
+  event: EventInfo;
+  goingCount: number;
+  firstName: string | null;
+  siteUrl: string;
+}) {
+  const others = Math.max(0, goingCount - 1);
+  return (
+    <EmailLayout
+      preview={`${event.when}: ${event.title}`}
+      heading={`${event.when.split(" at ")[0]}: ${event.title}.`}
+      siteUrl={siteUrl}
+      footerNote="You’re getting this because you said you’re in. Turn reminders off in Settings."
+    >
+      <Text style={styles.text}>
+        {firstName ? `${firstName}, you` : "You"} said you’re in.
+        {others > 0
+          ? ` ${others} ${others === 1 ? "other person is" : "others are"} going too.`
+          : " Bring someone."}
+      </Text>
+      <DateBlock
+        month={event.month}
+        day={event.day}
+        weekday={event.weekday}
+        title={event.title}
+        detail={[event.when, event.where].filter(Boolean).join(" · ")}
+      />
+      <EmailButton href={`${siteUrl}/events/${event.id}`}>Open the plan</EmailButton>
+    </EmailLayout>
+  );
+}
+
 export function NewFollowerEmail({ actor, siteUrl }: { actor: Person; siteUrl: string }) {
   return (
     <EmailLayout

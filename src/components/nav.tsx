@@ -47,7 +47,7 @@ export function Nav({ profile }: { profile: ProfileLite }) {
         <Link
           href="/events/new"
           aria-current={isActive("/events/new") ? "page" : undefined}
-          className="mt-7 flex items-center justify-center gap-2 rounded-full bg-flare px-4 py-2.5 font-semibold text-white hover:bg-flare-deep"
+          className="mt-7 flex items-center justify-center gap-2 rounded-full bg-flare px-4 py-2.5 font-semibold text-on-flare hover:bg-flare-deep"
         >
           <Plus size={18} aria-hidden /> Post a flyer
         </Link>
@@ -144,7 +144,7 @@ export function Nav({ profile }: { profile: ProfileLite }) {
               }`}
             >
               {isPost ? (
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-flare text-white">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-flare text-on-flare">
                   <Icon size={18} aria-hidden />
                 </span>
               ) : (

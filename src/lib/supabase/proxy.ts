@@ -2,13 +2,19 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabaseEnv, isSupabaseConfigured } from "./env";
 
+const EVENT_SHARE_RE = /^\/events\/([0-9a-f-]{36})\/?$/i;
+
 function isPublicPath(pathname: string) {
   return (
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/forgot-password") ||
-    pathname.startsWith("/auth/")
+    pathname.startsWith("/auth/") ||
+    pathname.startsWith("/e/") ||
+    pathname.startsWith("/api/cron/") ||
+    pathname === "/robots.txt" ||
+    pathname === "/manifest.webmanifest"
   );
 }
 
@@ -49,6 +55,14 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const signedIn = Boolean(data?.claims?.sub);
   const { pathname } = request.nextUrl;
+
+  // Shared event links work signed out: send visitors to the public view.
+  const share = pathname.match(EVENT_SHARE_RE);
+  if (!signedIn && share) {
+    const publicUrl = request.nextUrl.clone();
+    publicUrl.pathname = `/e/${share[1]}`;
+    return NextResponse.redirect(publicUrl);
+  }
 
   if (!signedIn && !isPublicPath(pathname)) {
     const loginUrl = request.nextUrl.clone();

@@ -31,7 +31,31 @@ export async function generateMetadata({
   if (!UUID_RE.test(id)) return { title: "Event" };
   const supabase = await createClient();
   const event = await getEvent(supabase, id);
-  return { title: event?.title ?? "Event" };
+  if (!event) return { title: "Event" };
+
+  const tz = event.timezone || "UTC";
+  const when = `${fmt(event.starts_at, tz, "EEE, MMM d")} at ${timeLabel(event.starts_at, tz)}`;
+  const where = whereLabel(event);
+  const description = [when, where].filter(Boolean).join(" · ") + " · See who's going on Headcount";
+  const siteUrl = await getSiteUrl();
+  return {
+    title: event.title,
+    description,
+    openGraph: {
+      title: event.title,
+      description,
+      url: `${siteUrl}/events/${event.id}`,
+      siteName: "Headcount",
+      type: "website",
+      images: event.image_url ? [{ url: event.image_url, alt: `Flyer for ${event.title}` }] : [],
+    },
+    twitter: {
+      card: event.image_url ? "summary_large_image" : "summary",
+      title: event.title,
+      description,
+      images: event.image_url ? [event.image_url] : [],
+    },
+  };
 }
 
 function PeopleList({ title, people }: { title: string; people: RsvpLite[] }) {
