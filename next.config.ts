@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
     ],
   },
   async headers() {
+    // Frame-blocking headers stay off in development so the app can be
+    // previewed inside device-sized iframes.
+    if (process.env.NODE_ENV !== "production") return [];
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
 };

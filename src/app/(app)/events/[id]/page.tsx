@@ -137,40 +137,50 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
+      {/* Primary action: your RSVP. */}
+      <div className="mt-5">
         <RsvpButtons eventId={event.id} status={mine} past={past} />
+      </div>
+
+      {/* Secondary actions: one compact row that wraps cleanly on phones. */}
+      <div className="mt-3 flex flex-wrap items-center gap-2">
         {event.ticket_url && (
           <a
             href={event.ticket_url}
             target="_blank"
             rel="noopener noreferrer nofollow ugc"
-            className="btn btn-outline"
+            className="btn btn-outline text-sm"
           >
             Tickets <ExternalLink size={14} aria-hidden />
           </a>
         )}
         <ShareButton title={event.title} />
+        {!past && (
+          <details className="group relative">
+            <summary className="btn btn-outline cursor-pointer list-none text-sm [&::-webkit-details-marker]:hidden">
+              <CalendarPlus size={14} aria-hidden />
+              <span className="sm:hidden">Calendar</span>
+              <span className="hidden sm:inline">Add to calendar</span>
+            </summary>
+            <div className="absolute left-0 z-10 mt-2 w-56 rounded-xl border border-edge-2 bg-surface p-1 shadow-card">
+              <a
+                href={googleCalendarUrl(event, eventUrl)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-edge"
+              >
+                <CalendarPlus size={14} aria-hidden /> Google Calendar
+              </a>
+              <a
+                href={`/events/${event.id}/calendar.ics`}
+                className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-edge"
+              >
+                <Download size={14} aria-hidden /> Apple / Outlook (.ics)
+              </a>
+            </div>
+          </details>
+        )}
       </div>
-
-      {!past && (
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <span className="text-muted">Add to your calendar</span>
-          <a
-            href={googleCalendarUrl(event, eventUrl)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 text-muted-2 hover:text-fore hover:underline"
-          >
-            <CalendarPlus size={14} aria-hidden /> Google Calendar
-          </a>
-          <a
-            href={`/events/${event.id}/calendar.ics`}
-            className="inline-flex items-center gap-1 text-muted-2 hover:text-fore hover:underline"
-          >
-            <Download size={14} aria-hidden /> Apple / Outlook (.ics)
-          </a>
-        </div>
-      )}
 
       <dl className="mt-6 grid gap-x-6 gap-y-3 sm:grid-cols-2">
         {event.address && (
@@ -213,7 +223,7 @@ export default async function EventPage({ params }: { params: Promise<{ id: stri
         <p className="mt-5 whitespace-pre-line leading-relaxed">{event.description}</p>
       )}
 
-      <EventLinks event={event} />
+      <EventLinks event={event} hideTickets={Boolean(event.ticket_url)} />
 
       <section className="mt-8 flex gap-3 border-t border-edge pt-6">
         <Link href={`/u/${event.author.username}`} className="shrink-0">

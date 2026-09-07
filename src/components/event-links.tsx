@@ -20,8 +20,16 @@ function provenance(check: EventRow["link_checks"][string] | undefined) {
  * already been normalised to http(s), had shorteners unwrapped, and (when a
  * Safe Browsing key is configured) been checked against Google's threat lists.
  */
-export function EventLinks({ event }: { event: EventRow }) {
+export function EventLinks({
+  event,
+  hideTickets = false,
+}: {
+  event: EventRow;
+  /** Set when the page already shows a Tickets button, to avoid repeating it. */
+  hideTickets?: boolean;
+}) {
   const rows = (Object.keys(LABELS) as (keyof typeof LABELS)[])
+    .filter((kind) => !(hideTickets && kind === "ticket_url"))
     .map((kind) => ({ kind, url: event[kind], check: event.link_checks?.[kind] }))
     .filter((r): r is typeof r & { url: string } => Boolean(r.url));
 
