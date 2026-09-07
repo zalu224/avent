@@ -1,5 +1,6 @@
 import { Nav } from "@/components/nav";
 import { NotConnected } from "@/components/not-connected";
+import { countUnread } from "@/lib/messages";
 import { getProfileById } from "@/lib/queries";
 import { isSupabaseConfigured } from "@/lib/supabase/env";
 import { createClient, requireUserId } from "@/lib/supabase/server";
@@ -9,7 +10,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const userId = await requireUserId();
   const supabase = await createClient();
-  const profile = await getProfileById(supabase, userId);
+  const [profile, unreadMessages] = await Promise.all([
+    getProfileById(supabase, userId),
+    countUnread(supabase, userId),
+  ]);
 
   if (!profile) {
     return (
@@ -25,7 +29,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-dvh md:pl-60">
-      <Nav profile={profile} />
+      <Nav profile={profile} unreadMessages={unreadMessages} />
       <main className="mx-auto w-full max-w-2xl px-4 pb-28 pt-6 md:px-8 md:pb-16 md:pt-10">
         {children}
       </main>

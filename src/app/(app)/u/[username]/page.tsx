@@ -5,6 +5,7 @@ import { MapPin } from "lucide-react";
 import { Avatar } from "@/components/avatar";
 import { EventListItem } from "@/components/event-card";
 import { FollowButton } from "@/components/follow-button";
+import { startDm } from "@/lib/actions/messages";
 import { isPast, pluralize } from "@/lib/format";
 import {
   getEventsByAuthor,
@@ -123,7 +124,15 @@ export default async function ProfilePage({
                 Edit profile
               </Link>
             ) : (
-              <FollowButton targetId={profile.id} following={myFollowing.has(profile.id)} />
+              <>
+                <FollowButton targetId={profile.id} following={myFollowing.has(profile.id)} />
+                <form action={startDm}>
+                  <input type="hidden" name="user_id" value={profile.id} />
+                  <button type="submit" className="btn btn-outline text-sm">
+                    Message
+                  </button>
+                </form>
+              </>
             )}
           </div>
           <p className="text-muted">@{profile.username}</p>

@@ -158,6 +158,24 @@ Two kinds of email, both branded Headcount:
   automatically; brand-new Google users get a profile from their Google name and photo
   (migration `20260908000000_google_sign_in.sql`).
 
+## Messaging
+
+Direct messages and group chats live in `conversations`, `conversation_members` and `messages`
+(migration `20260910000000_messaging.sql`). Row-level security limits every read and write to the
+conversations you are in; `create_conversation()` starts a DM (one thread per pair) or a group.
+Open threads receive new messages over Supabase Realtime (`messages` is in the `supabase_realtime`
+publication) and catch up when the tab regains focus. The Message button on a profile opens the DM,
+`/messages/new` picks people from who you follow and who follows you, and groups can be renamed,
+grow, or be left from the thread menu.
+
+## Free-first AI and search
+
+Flyer reading tries Gemini, then Groq (free tier), OpenRouter, a local Ollama model, Anthropic and
+the AI Gateway, in that order; `AI_PREFER_LOCAL=1` moves Ollama first so development spends no
+hosted quota. Organizer lookup tries Google Programmable Search (100/day free), Tavily (capped at
+1,400/month), Brave, then DuckDuckGo with no key at all, so it never stops working.
+`npx tsx scripts/check-usage.ts` shows the counters.
+
 ## Project layout
 
 ```

@@ -6,6 +6,7 @@ import {
   Bell,
   CalendarDays,
   LogOut,
+  MessageCircle,
   Newspaper,
   Plus,
   Search,
@@ -20,6 +21,7 @@ const DESKTOP_ITEMS = [
   { href: "/feed", label: "Feed", icon: Newspaper },
   { href: "/discover", label: "Search events", icon: Search },
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
+  { href: "/messages", label: "Messages", icon: MessageCircle },
   { href: "/people", label: "People", icon: Users },
   { href: "/activity", label: "Activity", icon: Bell },
 ] as const;
@@ -31,7 +33,14 @@ const MOBILE_ITEMS = [
   { href: "/calendar", label: "Calendar", icon: CalendarDays },
 ] as const;
 
-export function Nav({ profile }: { profile: ProfileLite }) {
+export function Nav({
+  profile,
+  unreadMessages = 0,
+}: {
+  profile: ProfileLite;
+  /** Conversations with something unseen; shown as a badge. */
+  unreadMessages?: number;
+}) {
   const pathname = usePathname();
   const profileHref = `/u/${profile.username}` as const;
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
@@ -66,6 +75,11 @@ export function Nav({ profile }: { profile: ProfileLite }) {
               >
                 <Icon size={20} aria-hidden />
                 {label}
+                {href === "/messages" && unreadMessages > 0 && (
+                  <span className="ml-auto rounded-full bg-flare px-2 py-0.5 text-xs font-semibold text-on-flare">
+                    {unreadMessages}
+                  </span>
+                )}
               </Link>
             );
           })}
@@ -108,6 +122,16 @@ export function Nav({ profile }: { profile: ProfileLite }) {
           Headcount
         </Link>
         <div className="flex items-center gap-1">
+          <Link
+            href="/messages"
+            aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : "Messages"}
+            className={`relative rounded-full p-2 ${isActive("/messages") ? "bg-surface text-fore" : "text-muted-2"}`}
+          >
+            <MessageCircle size={20} aria-hidden />
+            {unreadMessages > 0 && (
+              <span className="absolute right-1.5 top-1.5 size-2 rounded-full bg-flare" aria-hidden />
+            )}
+          </Link>
           <Link
             href="/people"
             aria-label="People"
