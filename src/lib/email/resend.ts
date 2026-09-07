@@ -1,8 +1,10 @@
 import { Resend } from "resend";
 import type { ReactElement } from "react";
 
-/** Sender shown in inboxes. Use a verified Resend domain in production. */
-export const EMAIL_FROM = process.env.EMAIL_FROM ?? "Headcount <onboarding@resend.dev>";
+/** Sender shown in inboxes. Read at send time so scripts that load .env.local late still pick it up. */
+export function emailFrom() {
+  return process.env.EMAIL_FROM ?? "Headcount <onboarding@resend.dev>";
+}
 
 let client: Resend | null = null;
 
@@ -34,7 +36,7 @@ export async function sendEmail(input: {
   }
 
   const { data, error } = await resend.emails.send({
-    from: EMAIL_FROM,
+    from: emailFrom(),
     to: input.to,
     subject: input.subject,
     react: input.react,

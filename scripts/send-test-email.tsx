@@ -5,8 +5,6 @@
  *   npx tsx scripts/send-test-email.tsx you@example.com
  */
 import { readFileSync } from "node:fs";
-import { RsvpEmail } from "../src/lib/email/notification-emails";
-import { sendEmail } from "../src/lib/email/resend";
 
 // Load .env.local without printing anything.
 try {
@@ -19,6 +17,9 @@ try {
 }
 
 async function main() {
+  const { RsvpEmail } = await import("../src/lib/email/notification-emails");
+  const { sendEmail, emailFrom } = await import("../src/lib/email/resend");
+  console.log("from:", emailFrom());
   const to = process.argv[2];
   if (!to) {
     console.error("Usage: npx tsx scripts/send-test-email.tsx you@example.com");
